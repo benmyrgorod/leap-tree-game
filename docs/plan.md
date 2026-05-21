@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Leap Tree Game will start as a small Python 3.12+ CLI MVP: the player configures an AI provider, chooses a genre, setting, and opening, then repeatedly selects between two AI-generated continuation options. The implementation should stay narrow, testable, and easy to run with `python src/main.py`.
+Leap Tree Game will start as a small Python 3.12+ CLI MVP: the player configures an AI provider, chooses a genre, setting, and opening, then repeatedly selects between two AI-generated continuation options. The implementation should stay narrow, testable, and easy to run with `python leap-tree-game/app.py`.
 
 ## References
 
@@ -20,9 +20,9 @@ docs/
 prompts/
   initial.md
   next.md
-leap_tree_game/
+leap-tree-game/
   __init__.py
-  main.py
+  app.py
   config/
     __init__.py
     settings.py
@@ -52,8 +52,6 @@ tests/
 requirements.txt
 README.md
 ```
-
-`src/main.py` should only create the Typer app and call the application runner. The actual loop should live in `leap_tree_game.app` and `leap_tree_game.game.engine`.
 
 ## Core Data Model
 
@@ -142,7 +140,7 @@ Use Typer for commands and Rich for the interactive terminal UI.
 Initial command:
 
 ```bash
-python src/main.py
+python leap-tree-game/app.py
 ```
 
 Recommended commands:
@@ -216,13 +214,13 @@ Live provider smoke tests should be optional and skipped unless the needed API k
 
 - Create `requirements.txt`.
 - Create `.env.example`.
-- Create package folders under `src/leap_tree_game`.
-- Add `src/main.py` Typer entrypoint.
+- Create package folders under `leap-tree-game`.
+- Add `leap-tree-game/app.py` Typer entrypoint.
 - Add a short README with install and run commands.
 
 Acceptance criteria:
 
-- `python src/main.py --help` works.
+- `python leap-tree-game/app.py --help` works.
 - `pip install -r requirements.txt` installs the declared runtime dependencies.
 
 ### Phase 2: Models, Config, and Setup
@@ -284,7 +282,7 @@ Acceptance criteria:
 Acceptance criteria:
 
 - `pytest` passes.
-- `python src/main.py` launches the game.
+- `python leap-tree-game/app.py` launches the game.
 - The MVP stays within the explicit out-of-scope boundaries: no save/load, no database, no auth, no multiplayer, no summarization.
 
 ## Suggested Dependency Set

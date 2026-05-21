@@ -103,14 +103,14 @@ Suggested structure:
 ```text
 /docs
 /prompts
-/src
+/leap-tree-game
   /game
   /ui
   /models
   /config
+  app.py
 /tests
 .env.example
-main.py
 requirements.txt
 README.md
 ```
@@ -135,7 +135,7 @@ Include:
 The application should be runnable with:
 
 ```bash
-python leap-tree-game/main.py
+python leap-tree-game/app.py
 ```
 
 Optionally:
