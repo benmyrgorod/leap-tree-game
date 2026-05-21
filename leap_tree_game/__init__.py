@@ -1,5 +1,5 @@
 """Leap Tree Game package."""
 
-__all__ = ["__version__"]
+from .version import __version__, BASE_VERSION, GIT_VERSION, VERSION, VERSION_INFO
 
-__version__ = "0.1.0"
+__all__ = ["__version__", "BASE_VERSION", "GIT_VERSION", "VERSION", "VERSION_INFO"]
