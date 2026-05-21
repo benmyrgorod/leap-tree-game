@@ -34,7 +34,7 @@ The system keeps the canonical story path, renders each state in framed screens,
   - If it does not, options should continue the current sentence.
 - **ASCII scene rendering**
   - Render an image-only ASCII scene above each story turn.
-  - Scene should be requested from model with full story context and last completed sentence.
+  - Scene should be requested from model with full story context, genre, setting, and last completed sentence.
   - ASCII output must be pure visual text: no prose, no markdown, no labels, no preamble.
 
 ## Runtime and Error Behavior

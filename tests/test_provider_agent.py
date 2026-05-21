@@ -218,9 +218,15 @@ def test_story_client_generates_ascii_art() -> None:
     )
     client = _client(agent)
 
-    ascii_art = client.generate_ascii_art("The moon hung like a coin over the harbor.")
+    ascii_art = client.generate_ascii_art(
+        "The moon hung like a coin over the harbor.",
+        genre="Fantasy",
+        setting="Middle Ages",
+    )
 
     assert ascii_art == "/\\\n/--\\\n||  ||\n||  ||\n\\--/"
+    assert "Fantasy" in agent.prompts[-1]
+    assert "Middle Ages" in agent.prompts[-1]
 
 
 def test_story_client_truncates_ascii_art_to_requested_height() -> None:

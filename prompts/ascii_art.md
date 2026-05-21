@@ -3,6 +3,9 @@ Create a compact monochrome ASCII illustration of this scene.
 Current story context:
 {story_context}
 
+Genre: {genre}
+Setting: {setting}
+
 Last complete sentence to illustrate:
 {focus_sentence}
 

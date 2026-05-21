@@ -127,6 +127,8 @@ def build_next_prompt(
 def build_ascii_art_prompt(
     story: str,
     *,
+    genre: str | None = None,
+    setting: str | None = None,
     width: int | None = None,
     height: int | None = None,
 ) -> str:
@@ -136,6 +138,8 @@ def build_ascii_art_prompt(
     focus_sentence = _extract_last_sentence(story)
     return _replace_placeholders(
         template,
+        genre=genre or "a timeless adventure",
+        setting=setting or "an open setting",
         story_context=story,
         focus_sentence=focus_sentence,
         width=target_width,

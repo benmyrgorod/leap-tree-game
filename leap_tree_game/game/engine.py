@@ -60,7 +60,11 @@ class GameEngine:
                 first_response,
                 continuation_shape=continuation_shape_for_response(first_response),
             )
-            self._render_turn(first_response, turn_number=state.next_turn_number() - 1)
+            self._render_turn(
+                first_response,
+                state=state,
+                turn_number=state.next_turn_number() - 1,
+            )
 
             if not self._play_turns(state):
                 return
@@ -84,7 +88,11 @@ class GameEngine:
                     regenerated,
                     continuation_shape=continuation_shape,
                 )
-                self._render_turn(regenerated, turn_number=state.turn_count)
+                self._render_turn(
+                    regenerated,
+                    state=state,
+                    turn_number=state.turn_count,
+                )
                 continue
 
             label = "A" if command == "a" else "B"
@@ -96,7 +104,11 @@ class GameEngine:
                 next_response,
                 continuation_shape=continuation_shape_for_response(next_response),
             )
-            self._render_turn(next_response, turn_number=state.next_turn_number() - 1)
+            self._render_turn(
+                next_response,
+                state=state,
+                turn_number=state.next_turn_number() - 1,
+            )
 
     def _start_initial_turn(self, state: GameState) -> StoryResponse | None:
         response = self._generate_with_retry(
@@ -188,12 +200,20 @@ class GameEngine:
                 active_console=self.console,
             )
 
-    def _render_turn(self, response: StoryResponse, *, turn_number: int) -> None:
+    def _render_turn(
+        self,
+        response: StoryResponse,
+        *,
+        state: GameState,
+        turn_number: int,
+    ) -> None:
         art_height = self._art_height(response)
         art_width = self._art_width()
         ascii_art = self._generate_with_retry(
             lambda: self.story_client.generate_ascii_art(
                 response.story,
+                genre=state.setup.genre,
+                setting=state.setup.setting,
                 width=art_width,
                 height=art_height,
             ),

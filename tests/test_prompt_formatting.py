@@ -192,9 +192,17 @@ def test_next_prompt_includes_regeneration_avoidance_instruction() -> None:
 
 
 def test_ascii_prompt_includes_story_and_width() -> None:
-    prompt = build_ascii_art_prompt("A crow circled the chapel bell.", width=72, height=14)
+    prompt = build_ascii_art_prompt(
+        "A crow circled the chapel bell.",
+        genre="Mystery",
+        setting="Modern Day",
+        width=72,
+        height=14,
+    )
 
     assert "Current story context:" in prompt
+    assert "Genre: Mystery" in prompt
+    assert "Setting: Modern Day" in prompt
     assert "Last complete sentence to illustrate:" in prompt
     assert "A crow circled the chapel bell." in prompt
     assert "72" in prompt

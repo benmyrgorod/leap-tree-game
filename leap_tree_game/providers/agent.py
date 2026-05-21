@@ -215,12 +215,20 @@ class StoryClient:
         self,
         story: str,
         *,
+        genre: str | None = None,
+        setting: str | None = None,
         width: int | None = None,
         height: int | None = None,
     ) -> str:
         try:
             raw_output = self._run_sync(
-                build_ascii_art_prompt(story, width=width, height=height),
+                build_ascii_art_prompt(
+                    story,
+                    genre=genre,
+                    setting=setting,
+                    width=width,
+                    height=height,
+                ),
                 output_kind="ascii",
             )
             return _coerce_ascii_art(
@@ -241,7 +249,6 @@ class StoryClient:
                 provider=self.settings.provider,
                 model=self.settings.model,
             ) from exc
-
     @property
     def total_tokens(self) -> int:
         return self.token_usage.total_tokens

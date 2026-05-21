@@ -63,7 +63,7 @@ Build around deterministic phases:
 ## 5) Rendering and Layout
 
 - For each turn:
-  - generate ASCII prompt using story context and last complete sentence,
+  - generate ASCII prompt using story context, genre, setting, and last complete sentence,
   - compute remaining terminal lines via `TurnLayout`,
   - render one frame containing ASCII scene, story panel, options, and status footer.
 - Footer format is always:
