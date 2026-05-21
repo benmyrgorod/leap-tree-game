@@ -87,10 +87,6 @@ def ask_choice_command(*, console: Console) -> str:
     ).lower()
 
 
-def render_menu(title: str, options: list[str], *, console: Console) -> None:
-    console.print(build_menu_table(title, options))
-
-
 def render_menu_screen(
     title: str,
     options: list[str],

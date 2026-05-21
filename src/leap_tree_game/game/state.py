@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from leap_tree_game.models.story import StoryResponse
+from leap_tree_game.game.text import append_continuation
 
 ChoiceLabel = Literal["A", "B"]
 
@@ -107,19 +108,3 @@ class GameState(BaseModel):
 
         return "\n".join(lines)
 
-
-def append_continuation(story: str, continuation: str) -> str:
-    """Append a selected continuation while avoiding obvious duplication."""
-
-    base = story.rstrip()
-    tail = continuation.strip()
-    if not tail:
-        raise ValueError("Continuation must not be empty.")
-
-    if tail.lower().startswith(base.lower()):
-        return tail
-
-    if tail.startswith((",", ".", ";", ":", "!", "?", ")", "]", "}")):
-        return f"{base}{tail}"
-
-    return f"{base} {tail}"

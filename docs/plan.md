@@ -5,8 +5,8 @@ Leap Tree Game will start as a small Python 3.12+ CLI MVP: the player configures
 ## References
 
 - Project requirements: [requirements.md](requirements.md)
-- POC initial prompt: [poc-prompts/01-initial-prompt.md](poc-prompts/01-initial-prompt.md)
-- POC next-turn prompt: [poc-prompts/02-next-prompt.md](poc-prompts/02-next-prompt.md)
+- MVP initial prompt: [prompts/initial.md](prompts/initial.md)
+- MVP next-turn prompt: [prompts/next.md](prompts/next.md)
 - Pydantic AI model/provider concepts: [Pydantic AI models overview](https://pydantic.dev/docs/ai/models/overview/)
 - Pydantic AI structured output modes: [Pydantic AI output docs](https://pydantic.dev/docs/ai/core-concepts/output/)
 - Ollama provider details: [Pydantic AI Ollama docs](https://pydantic.dev/docs/ai/models/ollama/)
@@ -125,7 +125,7 @@ The game engine should not know whether the selected model is OpenAI, Anthropic,
 
 ## Prompt Handling
 
-Move the POC prompt language into `prompts/initial.md` and `prompts/next.md`, then normalize them into implementation-ready templates.
+Move the initial prompt language into `prompts/initial.md` and `prompts/next.md`, then normalize them into implementation-ready templates.
 
 Prompt builder responsibilities:
 
@@ -144,9 +144,9 @@ Prompt builder responsibilities:
 
 Keep predefined options in code constants so tests can cover them and the UI can render them consistently:
 
-- Genres from `docs/poc-prompts/01-initial-prompt.md`
-- Settings from `docs/poc-prompts/01-initial-prompt.md`
-- Story openings from `docs/poc-prompts/01-initial-prompt.md`
+- Genres from `prompts/initial.md`
+- Settings from `prompts/initial.md`
+- Story openings from `prompts/initial.md`
 
 Each list should include an `Other` path that accepts custom player input.
 
@@ -171,7 +171,7 @@ Runtime flow:
 1. Render app title and provider/model summary.
 2. If config is missing or invalid, run setup wizard.
 3. Prompt for genre, setting, and story opening.
-4. Generate and stream the first story response, with `story` equal to the selected opening.
+4. Generate the first story response, with `story` equal to the selected opening.
 5. Render the current story and two continuation choices.
 6. Prompt for A, B, restart, or quit.
 7. Append the selected continuation text to the canonical story in game state.
@@ -190,10 +190,10 @@ Use:
 - Rich panels for story text.
 - Clear A/B choice rows with bold labels.
 - Color-coded status lines for prompts, warnings, and recoverable errors.
-- A streaming area that progressively updates the story text.
+- A framed area that renders the current story and choice set.
 - Short commands at choice prompts: `a`, `b`, `r`, `q`.
 
-For streaming structured output, stream the `story` field as partial output when the provider supports it. Render choices only after the final `StoryResponse` validates.
+Render choices only after the final `StoryResponse` validates.
 
 ## Error Handling
 
@@ -284,7 +284,7 @@ Acceptance criteria:
 - Build Rich forms for genre, setting, and opening.
 - Build story and choice rendering.
 - Build repeat loop with `a`, `b`, `r`, and `q`.
-- Add progressive story streaming where supported.
+- Add framed turn rendering updates for every response.
 
 Acceptance criteria:
 
@@ -327,7 +327,7 @@ Add provider extras only if needed after verifying the selected Pydantic AI inst
 3. Add config loading and setup wizard.
 4. Add fake AI client path so the game loop can be built without API keys.
 5. Add real Pydantic AI provider wiring.
-6. Add streaming UI.
+6. Add framed, screen-refresh turn rendering.
 7. Add recovery paths and final docs.
 
 This order keeps the terminal game playable early while isolating the highest-risk integration work behind a small provider layer.

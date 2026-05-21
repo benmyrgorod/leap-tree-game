@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 from leap_tree_game.game.state import Choice, GameSetup, GameState
+from leap_tree_game.game.text import sentence_has_ended
 
 ContinuationShape = Literal["continue_sentence", "end_sentence"]
 ContinuationStart = Literal["start_new_sentence", "continue_previous_sentence"]
@@ -153,10 +154,6 @@ def opposite_continuation_shape(shape: ContinuationShape) -> ContinuationShape:
     if shape == "continue_sentence":
         return "end_sentence"
     return "continue_sentence"
-
-
-def sentence_has_ended(text: str) -> bool:
-    return text.rstrip().endswith((".", "!", "?"))
 
 
 def _continuation_start_instruction(story: str) -> str:

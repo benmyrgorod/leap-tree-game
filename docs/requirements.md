@@ -6,8 +6,8 @@ The player selects one option, that option's continuation text is appended to th
 
 Please see the prompt templates:
 
-- [poc-prompts/01-initial-prompt.md](poc-prompts/01-initial-prompt.md) — initial prompt template for POC.
-- [poc-prompts/02-next-prompt.md](poc-prompts/02-next-prompt.md) — subsequent prompt template for POC.
+- [prompts/initial.md](prompts/initial.md) — initial prompt template for the MVP.
+- [prompts/next.md](prompts/next.md) — subsequent prompt template for the MVP.
 
 ## UI Requirements
 
@@ -20,7 +20,7 @@ Please see the prompt templates:
   - player choices
   - prompts/errors
 - The UI should feel clean, spacious, and modern, somewhat similar to Claude Code
-- AI responses should stream progressively in the terminal
+- The story and choices should render on each turn in one framed screen.
 
 ## Game Flow
 
@@ -39,7 +39,7 @@ Please see the prompt templates:
 - Framework: Pydantic AI
 - CLI libraries:
   - `Typer` for commands and CLI interactions
-  - `Rich` for terminal formatting and streaming UI
+  - `Rich` for terminal formatting and interactive UI screens
 - Maintain `.env.example` file
 - Use an environment file (`.env`) to configure:
   - AI provider

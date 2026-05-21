@@ -13,9 +13,13 @@ from leap_tree_game.game.prompts import (
     ContinuationShape,
     build_initial_prompt,
     build_next_prompt,
-    sentence_has_ended,
 )
 from leap_tree_game.game.state import Choice, GameSetup, GameState
+from leap_tree_game.game.text import (
+    capitalize_continuation_if_needed,
+    ensure_terminal_punctuation,
+    strip_terminal_punctuation,
+)
 from leap_tree_game.models.story import StoryResponse, parse_story_response
 
 
@@ -179,36 +183,7 @@ def _normalize_option(
     option: str,
     continuation_shape: ContinuationShape,
 ) -> str:
-    normalized = _normalize_option_start(story, option)
+    normalized = capitalize_continuation_if_needed(story, option)
     if continuation_shape == "continue_sentence":
-        return _strip_terminal_sentence_punctuation(normalized)
-    return _ensure_terminal_sentence_punctuation(normalized)
-
-
-def _normalize_option_start(story: str, option: str) -> str:
-    if not sentence_has_ended(story):
-        return option
-
-    for index, char in enumerate(option):
-        if char.isalpha():
-            return option[:index] + char.upper() + option[index + 1 :]
-
-    return option
-
-
-def _strip_terminal_sentence_punctuation(option: str) -> str:
-    trailing_whitespace_length = len(option) - len(option.rstrip())
-    trailing_whitespace = option[-trailing_whitespace_length:] if trailing_whitespace_length else ""
-    stripped = option.rstrip()
-    while stripped.endswith((".", "!", "?")):
-        stripped = stripped[:-1].rstrip()
-    return f"{stripped}{trailing_whitespace}"
-
-
-def _ensure_terminal_sentence_punctuation(option: str) -> str:
-    stripped = option.rstrip()
-    if not stripped or stripped.endswith((".", "!", "?")):
-        return option
-
-    trailing_whitespace = option[len(stripped) :]
-    return f"{stripped}.{trailing_whitespace}"
+        return strip_terminal_punctuation(normalized)
+    return ensure_terminal_punctuation(normalized)
