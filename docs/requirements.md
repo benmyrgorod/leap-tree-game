@@ -28,6 +28,7 @@ Please see the prompt templates:
 - Render the ASCII scene above the story text on each turn, derived from a separate model query and using the full available frame width with an explicitly calculated target height for remaining space.
 - Generate ASCII scenes from the most recent sentence while preserving continuity with the full story context.
 - The rendered ASCII scene must be image-only (no prose, no labels, no story text, no markdown, no preamble).
+- The bottom footer should show the current state as: `turn <N> | <provider> / <model> | tokens used: <count>`, where provider/model are lower-case labels by runtime summary and token count reflects cumulative usage.
 
 ## Game Flow
 
@@ -122,6 +123,7 @@ The application must gracefully handle:
 - API rate limits
 
 Error messages should be user-friendly and clearly explain how to recover or retry.
+- If the provider returns a model-level 404 response, explain that the configured model may be unavailable to this account and direct the player to setup and select another model.
 
 ## Application Scope
 

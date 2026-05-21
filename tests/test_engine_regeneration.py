@@ -184,6 +184,20 @@ def test_art_height_is_calculated_from_remaining_terminal_space() -> None:
     assert art_height == expected_height
 
 
+def test_turn_status_includes_turn_and_token_usage() -> None:
+    engine = GameEngine(
+        ProviderSettings(provider="openai", model="gpt-5.2", openai_api_key="sk-test"),
+        console=Console(file=StringIO(), force_terminal=False),
+    )
+    engine.story_client.total_input_tokens = 13
+    engine.story_client.total_output_tokens = 6
+
+    assert (
+        engine._turn_status(4)
+        == "turn 4 | openai / gpt-5.2 | tokens used: 19"
+    )
+
+
 def _state_after_current_turn(turn: StoryResponse) -> GameState:
     state = GameState(
         setup=GameSetup(

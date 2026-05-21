@@ -178,11 +178,12 @@ Runtime flow:
 3. Prompt for genre, setting, and story opening.
 4. Generate the first story response, with `story` equal to the selected opening.
 5. Render an ASCII scene for the current story using a calculated target height for remaining space, then render the story and two continuation choices.
-6. Prompt for A, B, regenerate, restart, or quit.
-7. Append the selected continuation text to the canonical story in game state.
-8. Generate the next story response with full history and current canonical story.
-9. When regenerate is chosen, request a new pair of options and prefer values that are not identical to the previous pair.
-10. Repeat until the player quits or restarts.
+6. Show a per-turn status footer in the format `turn N | <provider> / <model> | tokens used: <cumulative>` (all lower-case labels).
+7. Prompt for A, B, regenerate, restart, or quit.
+8. Append the selected continuation text to the canonical story in game state.
+9. Generate the next story response with full history and current canonical story.
+10. When regenerate is chosen, request a new pair of options and prefer values that are not identical to the previous pair.
+11. Repeat until the player quits or restarts.
 
 ## Rich UI Design
 
@@ -197,6 +198,7 @@ Use:
 - Clear A/B choice rows with bold labels.
 - Color-coded status lines for prompts, warnings, and recoverable errors.
 - A framed area that renders the current story and choice set.
+- A status footer that includes current turn, provider/model, and cumulative tokens used.
 - Short commands at choice prompts: `a`, `b`, `g`, `r`, `q`.
 
 Render choices only after the final `StoryResponse` validates.

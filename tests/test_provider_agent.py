@@ -9,18 +9,37 @@ from leap_tree_game.providers.agent import StoryClient, StoryGenerationError
 
 
 class FakeResult:
-    def __init__(self, output):
+    def __init__(self, output, usage=None):
         self.output = output
+        self.usage = usage
+
+
+class FakeUsage:
+    def __init__(
+        self,
+        *,
+        requests: int = 0,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        cache_write_tokens: int = 0,
+        cache_read_tokens: int = 0,
+    ):
+        self.requests = requests
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+        self.cache_write_tokens = cache_write_tokens
+        self.cache_read_tokens = cache_read_tokens
 
 
 class FakeAgent:
-    def __init__(self, output):
+    def __init__(self, output, usage: FakeUsage | None = None):
         self.output = output
+        self.usage = usage
         self.prompts: list[str] = []
 
     def run_sync(self, prompt: str):
         self.prompts.append(prompt)
-        return FakeResult(self.output)
+        return FakeResult(self.output, usage=self.usage)
 
 
 def test_story_client_accepts_fake_agent_valid_response() -> None:
@@ -267,6 +286,63 @@ def test_story_client_normalizes_ascii_canvas_to_requested_size() -> None:
     assert lines[1] == "/\\__/   "
     assert lines[2] == "        "
     assert lines[3] == "        "
+
+
+def test_story_client_tracks_token_usage_from_model_response() -> None:
+    agent = FakeAgent(
+        {
+            "story": "The moon hung like a coin over the harbor.",
+            "option_a": "into the silvered grove",
+            "option_b": "toward the hidden spring.",
+        },
+        usage=FakeUsage(
+            requests=2,
+            input_tokens=8,
+            output_tokens=3,
+            cache_write_tokens=1,
+            cache_read_tokens=2,
+        ),
+    )
+    client = _client(agent)
+
+    client.generate_initial(
+        GameSetup(
+            genre="Fantasy",
+            setting="Middle Ages",
+            opening="Once upon a time in a distant land",
+        )
+    )
+
+    assert client.total_requests == 2
+    assert client.total_input_tokens == 8
+    assert client.total_output_tokens == 3
+    assert client.total_cache_write_tokens == 1
+    assert client.total_cache_read_tokens == 2
+    assert client.total_tokens == 11
+    assert "input=8" in client.token_usage_summary()
+    assert "output=3" in client.token_usage_summary()
+    assert "total=11" in client.token_usage_summary()
+
+
+def test_story_client_translates_model_not_found_error() -> None:
+    class FailingAgent:
+        def run_sync(self, prompt: str):
+            raise Exception(
+                "status_code: 404, model_name: gpt-5.3-codex-spark, body: {'message': 'The model `gpt-5.3-codex-spark` does not exist or you do not have access to it.'}"
+            )
+
+    client = StoryClient(_settings(), agent=FailingAgent())
+
+    with pytest.raises(StoryGenerationError) as exc_info:
+        client.generate_initial(
+            GameSetup(
+                genre="Mystery",
+                setting="Modern Day",
+                opening="A young lady mysteriously asked",
+            )
+        )
+
+    assert "configured model 'gpt-5.3-codex-spark' is not available" in str(exc_info.value)
 
 
 def _settings() -> ProviderSettings:

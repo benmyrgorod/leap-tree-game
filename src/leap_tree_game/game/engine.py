@@ -50,8 +50,10 @@ class GameEngine:
                     provider_summary=self.settings.summary(),
                 )
             )
+            next_turn = 1
             response = self._generate_with_retry(
-                lambda: self.story_client.generate_initial(state.setup)
+                lambda: self.story_client.generate_initial(state.setup),
+                turn_number=next_turn,
             )
             if response is None:
                 return
@@ -59,7 +61,7 @@ class GameEngine:
                 response,
                 continuation_shape=self._shape_from_response(response),
             )
-            self._render_turn(response)
+            self._render_turn(response, turn_number=next_turn)
 
             while True:
                 command = ask_choice_command(console=self.console)
@@ -71,7 +73,8 @@ class GameEngine:
                     break
                 if command == "g":
                     response = self._generate_with_retry(
-                        lambda: self._generate_regenerated_turn_with_retry(state)
+                        lambda: self._generate_regenerated_turn_with_retry(state),
+                        turn_number=max(len(state.turns), 1),
                     )
                     if response is None:
                         return
@@ -79,7 +82,7 @@ class GameEngine:
                         response,
                         continuation_shape=self._shape_from_turn(state.turns[-1]),
                     )
-                    self._render_turn(response)
+                    self._render_turn(response, turn_number=len(state.turns))
                     continue
 
                 if command == "a":
@@ -87,8 +90,10 @@ class GameEngine:
                 else:
                     label = "B"
                 choice = state.choose(label)
+                turn_number = len(state.turns) + 1
                 response = self._generate_with_retry(
-                    lambda choice=choice: self.story_client.generate_next(state, choice)
+                    lambda choice=choice: self.story_client.generate_next(state, choice),
+                    turn_number=turn_number,
                 )
                 if response is None:
                     return
@@ -96,7 +101,7 @@ class GameEngine:
                     response,
                     continuation_shape=self._shape_from_response(response),
                 )
-                self._render_turn(response)
+                self._render_turn(response, turn_number=turn_number)
 
     def _generate_regenerated_turn(self, state: GameState) -> StoryResponse:
         if not state.turns:
@@ -197,7 +202,7 @@ class GameEngine:
         normalized_new = {new_a.strip().casefold(), new_b.strip().casefold()}
         return normalized_baseline == normalized_new
 
-    def _render_turn(self, response) -> None:
+    def _render_turn(self, response, *, turn_number: int) -> None:
         ascii_art = self._generate_with_retry(
             lambda: self.story_client.generate_ascii_art(
                 response.story,
@@ -206,12 +211,20 @@ class GameEngine:
             ),
             status_message="[dim]Generating ASCII scene...[/dim]",
             ask_to_retry=False,
+            turn_number=turn_number,
         )
         render_turn_screen(
             response,
             active_console=self.console,
-            subtitle=self.settings.summary(),
+            subtitle=self._turn_status(turn_number),
             ascii_art=ascii_art,
+        )
+
+    def _turn_status(self, turn_number: int) -> str:
+        return (
+            f"turn {turn_number} | "
+            f"{self.settings.summary()} | "
+            f"tokens used: {self.story_client.total_tokens}"
         )
 
     def _art_width(self) -> int:
@@ -263,13 +276,20 @@ class GameEngine:
         *,
         status_message: str = "[dim]Asking the story engine...[/dim]",
         ask_to_retry: bool = True,
+        turn_number: int | None = None,
     ):
         while True:
             try:
                 with self.console.status(status_message):
                     return operation()
             except StoryGenerationError as exc:
-                render_error(str(exc), active_console=self.console)
+                if turn_number is None:
+                    render_error(str(exc), active_console=self.console)
+                else:
+                    render_error(
+                        f"turn {turn_number}: {str(exc)}",
+                        active_console=self.console,
+                    )
                 if not ask_to_retry:
                     return None
                 if not Confirm.ask("Retry?", default=True, console=self.console):

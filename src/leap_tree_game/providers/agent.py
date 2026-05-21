@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Protocol
+from typing import Any
+from typing import Callable, Literal, Protocol
 
 from pydantic import ValidationError
 
@@ -120,6 +121,11 @@ class StoryClient:
         default_factory=BalancedContinuationShapePicker
     )
     last_continuation_shape: ContinuationShape | None = None
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    total_cache_read_tokens: int = 0
+    total_cache_write_tokens: int = 0
+    total_requests: int = 0
 
     def generate_initial(
         self,
@@ -175,7 +181,11 @@ class StoryClient:
                 original=exc,
             ) from exc
         except Exception as exc:
-            raise _translate_exception(exc) from exc
+            raise _translate_exception(
+                exc,
+                provider=self.settings.provider,
+                model=self.settings.model,
+            ) from exc
 
     def generate_ascii_art(
         self,
@@ -202,7 +212,22 @@ class StoryClient:
                 original=exc,
             ) from exc
         except Exception as exc:
-            raise _translate_exception(exc) from exc
+            raise _translate_exception(
+                exc,
+                provider=self.settings.provider,
+                model=self.settings.model,
+            ) from exc
+
+    @property
+    def total_tokens(self) -> int:
+        return self.total_input_tokens + self.total_output_tokens
+
+    def token_usage_summary(self) -> str:
+        return (
+            f"input={self.total_input_tokens}, "
+            f"output={self.total_output_tokens}, "
+            f"total={self.total_tokens}"
+        )
 
     def _run_sync(self, prompt: str, *, output_kind: Literal["story", "ascii"] = "story"):
         if output_kind == "ascii":
@@ -215,10 +240,16 @@ class StoryClient:
             agent = self.agent or create_story_agent(self.settings)
 
         result = agent.run_sync(prompt)
+        _accumulate_usage(self, result)
         return getattr(result, "output", result)
 
 
-def _translate_exception(exc: Exception) -> StoryGenerationError:
+def _translate_exception(
+    exc: Exception,
+    *,
+    provider: str | None = None,
+    model: str | None = None,
+) -> StoryGenerationError:
     message = str(exc)
     lower_message = message.lower()
 
@@ -230,6 +261,18 @@ def _translate_exception(exc: Exception) -> StoryGenerationError:
     if "rate limit" in lower_message or "429" in lower_message:
         return StoryGenerationError(
             "The provider rate limit was reached. Wait a moment, retry, or switch models.",
+            original=exc,
+        )
+    if (
+        "status_code: 404" in lower_message
+        and "model_name" in lower_message
+        and ("does not exist" in lower_message or "not found" in lower_message)
+    ):
+        model_name = _extract_quoted_model_name(message) or model or "configured model"
+        provider_name = provider or "provider"
+        return StoryGenerationError(
+            f"The configured model '{model_name}' is not available for {provider_name} in your account. "
+            "Choose a different model in setup and retry.",
             original=exc,
         )
     if (
@@ -249,6 +292,47 @@ def _translate_exception(exc: Exception) -> StoryGenerationError:
         f"Story generation failed: {message}",
         original=exc,
     )
+
+
+def _accumulate_usage(client: StoryClient, result: Any) -> None:
+    usage = _extract_usage(result)
+    if not usage:
+        return
+
+    client.total_requests += usage.get("requests", 0)
+    client.total_input_tokens += usage.get("input_tokens", 0)
+    client.total_cache_write_tokens += usage.get("cache_write_tokens", 0)
+    client.total_cache_read_tokens += usage.get("cache_read_tokens", 0)
+    client.total_output_tokens += usage.get("output_tokens", 0)
+
+
+def _extract_usage(result: Any) -> dict[str, int]:
+    raw = getattr(result, "usage", None)
+    if callable(raw):
+        raw = raw()
+    if raw is None:
+        return {}
+    if isinstance(raw, dict):
+        return {
+            "requests": int(raw.get("requests", 0)),
+            "input_tokens": int(raw.get("input_tokens", 0)),
+            "cache_write_tokens": int(raw.get("cache_write_tokens", 0)),
+            "cache_read_tokens": int(raw.get("cache_read_tokens", 0)),
+            "output_tokens": int(raw.get("output_tokens", 0)),
+        }
+
+    return {
+        "requests": int(getattr(raw, "requests", 0)),
+        "input_tokens": int(getattr(raw, "input_tokens", 0)),
+        "cache_write_tokens": int(getattr(raw, "cache_write_tokens", 0)),
+        "cache_read_tokens": int(getattr(raw, "cache_read_tokens", 0)),
+        "output_tokens": int(getattr(raw, "output_tokens", 0)),
+    }
+
+
+def _extract_quoted_model_name(message: str) -> str | None:
+    match = re.search(r"model_name:\s*([`'\"]?)([^,\s]+)\1", message)
+    return match.group(2) if match else None
 
 
 def _with_canonical_story(
