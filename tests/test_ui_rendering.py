@@ -22,12 +22,12 @@ def test_turn_screen_renders_frame_story_and_choices() -> None:
 
     output = console.export_text()
 
-    assert "Leap Tree" in output
+    assert "Leap Tree Game" in output
     assert "Current story" in output
     assert "On a perfectly ordinary impossible day" in output
     assert "A." in output
     assert "B." in output
-    assert "Choose: a, b, r, q" in output
+    assert "Choose: a (first option), b (second option), r (restart), q (quit)" in output
 
 
 def test_menu_screen_renders_as_framed_question() -> None:

@@ -8,13 +8,20 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.text import Text
 from rich.table import Table
 
 from leap_tree_game import __version__
 from leap_tree_game.config.settings import ConfigError, MissingConfigError, load_settings
 from leap_tree_game.config.setup_wizard import run_setup_wizard
 from leap_tree_game.game.engine import GameEngine
-from leap_tree_game.ui.console import render_error, render_success, render_title, render_warning
+from leap_tree_game.ui.console import (
+    render_error,
+    render_framed_screen,
+    render_success,
+    render_title,
+    render_warning,
+)
 
 app = typer.Typer(add_completion=False, invoke_without_command=True, no_args_is_help=False)
 console = Console()
@@ -96,10 +103,18 @@ def _load_or_setup():
     try:
         return load_settings(Path(".env"))
     except MissingConfigError:
-        render_warning("No `.env` found. Starting setup.", active_console=console)
+        render_framed_screen(
+            "Leap Tree Game",
+            Text("No `.env` found. Starting setup.", style="yellow"),
+            active_console=console,
+        )
         return run_setup_wizard(Path(".env"), console=console)
     except ConfigError as exc:
-        render_warning(f"Configuration needs attention: {exc}", active_console=console)
+        render_framed_screen(
+            "Leap Tree Game",
+            Text(f"Configuration needs attention: {exc}", style="yellow"),
+            active_console=console,
+        )
         return run_setup_wizard(Path(".env"), console=console)
 
 

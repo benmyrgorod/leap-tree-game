@@ -67,7 +67,7 @@ def ask_menu_choice(
             custom_error: str | None = None
             while True:
                 render_custom_value_screen(title, console=console, subtitle=subtitle, error=custom_error)
-                custom = Prompt.ask("Custom value", console=console)
+                custom = Prompt.ask("Other", console=console)
                 try:
                     return resolve_menu_choice(raw, options, custom_value=custom)
                 except ValueError as exc:
@@ -97,6 +97,7 @@ def render_menu_screen(
 ) -> None:
     renderables = [
         Text("Select an option by number or name.", style="dim"),
+        Text(""),
         build_menu_table(title, options),
     ]
     if error:

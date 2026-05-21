@@ -15,6 +15,7 @@ from leap_tree_game.config.settings import (
     SUPPORTED_PROVIDERS,
     write_env_file,
 )
+from leap_tree_game.ui.console import render_framed_screen
 
 
 def run_setup_wizard(
@@ -23,8 +24,13 @@ def run_setup_wizard(
     console: Console | None = None,
 ) -> ProviderSettings:
     active_console = console or Console()
-    active_console.print("[bold]Leap Tree setup[/bold]")
-    active_console.print("Choose a provider and model. You can rerun this any time.")
+    render_framed_screen(
+        "Leap Tree Game",
+        "[bold]Configure your environment[/bold]",
+        "",
+        "Choose a provider and model. You can rerun this any time.",
+        active_console=active_console,
+    )
 
     provider = Prompt.ask(
         "Provider",

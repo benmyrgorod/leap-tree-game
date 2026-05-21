@@ -54,9 +54,12 @@ def render_turn_screen(
         box=box.ROUNDED,
         padding=(1, 2),
     )
-    commands = Text("Choose: a, b, r, q", style="dim")
+    commands = Text(
+        "\nChoose: a (first option), b (second option), r (restart), q (quit)",
+        style="dim",
+    )
     render_framed_screen(
-        "Leap Tree",
+        "Leap Tree Game",
         story,
         build_choices_table(response),
         commands,
@@ -90,9 +93,9 @@ def render_success(message: str, *, active_console: Console = console) -> None:
 
 
 def render_title(active_console: Console = console) -> None:
-    title = Text("Leap Tree", style="bold cyan")
+    title = Text("Leap Tree Game", style="bold cyan")
     render_framed_screen(
-        "Leap Tree",
+        "Leap Tree Game",
         title,
         active_console=active_console,
         subtitle="branching AI stories",
