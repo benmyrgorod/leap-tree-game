@@ -9,9 +9,10 @@ Do not add plot, characters, or narration to "story".
 
 Then provide exactly two short, contrasting continuation options.
 Each option must be actual prose that can be appended directly to "story" if selected.
-Each option should be about 5-7 words.
+Each option should be 3-7 words.
+{continuation_start_instruction}
+{continuation_shape_instruction}
 Do not make the options action labels, menu commands, summaries, or instructions.
-Include any punctuation needed for the continuation to read naturally after "story".
 
 Return only a valid JSON object with this exact shape:
 

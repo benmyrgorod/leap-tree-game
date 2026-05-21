@@ -13,6 +13,8 @@ Please see the prompt templates:
 
 - CLI application
 - Allow selecting predefined options or entering a custom “Other” option
+- Render each setup question and each story-choice turn on a fresh terminal screen
+- Put a muted frame around every screen, similar to Claude Code's framed terminal layout
 - Use colors and/or bold text for different sections such as:
   - current story
   - player choices
@@ -69,7 +71,14 @@ The `story` field is the canonical story-so-far. On the first turn, it must be e
 
 The `option_a` and `option_b` fields are not labels such as "Take the sword" or instructions to the player. They are the actual continuation text that could be appended to `story` if selected. For example, after the opening `On a perfectly ordinary impossible day`, the UI should look like:
 
-Each continuation option should be about 5-7 words so choices stay quick to scan.
+Each continuation option should be 3-7 words so choices stay quick to scan. The app should choose the first sentence-ending instruction with 50% probability, then alternate instructions on later AI requests so the game has a visible 50/50 balance:
+
+- The options should be the end of the sentence.
+- The options should not end the sentence.
+
+If the current story ends a sentence, each continuation option must start with a capital letter before it is rendered or appended.
+The prompt must also include a concrete beginning instruction derived from the current story text: if the current story ends a sentence, instruct options to start a new sentence; otherwise, instruct options to continue the previous sentence.
+The app must enforce the selected sentence-ending instruction after model validation: remove terminal sentence punctuation for the "should not end the sentence" mode, and ensure terminal sentence punctuation for the "should be the end of the sentence" mode.
 
 ```text
 On a perfectly ordinary impossible day

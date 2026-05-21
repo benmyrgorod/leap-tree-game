@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Protocol
+from dataclasses import dataclass, field
+from typing import Any, Callable, Protocol
 
 from pydantic import ValidationError
 
 from leap_tree_game.config.settings import ProviderSettings
-from leap_tree_game.game.prompts import build_initial_prompt, build_next_prompt
+from leap_tree_game.game.prompts import (
+    BalancedContinuationShapePicker,
+    ContinuationShape,
+    build_initial_prompt,
+    build_next_prompt,
+    sentence_has_ended,
+)
 from leap_tree_game.game.state import Choice, GameSetup, GameState
 from leap_tree_game.models.story import StoryResponse, parse_story_response
 
@@ -88,14 +94,23 @@ def _output_type(settings: ProviderSettings):
 class StoryClient:
     settings: ProviderSettings
     agent: RunsSync | None = None
+    continuation_shape_picker: Callable[[], ContinuationShape] = field(
+        default_factory=BalancedContinuationShapePicker
+    )
 
     def generate_initial(self, setup: GameSetup) -> StoryResponse:
-        response = self.generate(build_initial_prompt(setup))
-        return _with_canonical_story(response, setup.opening)
+        continuation_shape = self.continuation_shape_picker()
+        response = self.generate(
+            build_initial_prompt(setup, continuation_shape=continuation_shape)
+        )
+        return _with_canonical_story(response, setup.opening, continuation_shape)
 
     def generate_next(self, state: GameState, choice: Choice) -> StoryResponse:
-        response = self.generate(build_next_prompt(state, choice))
-        return _with_canonical_story(response, state.current_story())
+        continuation_shape = self.continuation_shape_picker()
+        response = self.generate(
+            build_next_prompt(state, choice, continuation_shape=continuation_shape)
+        )
+        return _with_canonical_story(response, state.current_story(), continuation_shape)
 
     def generate(self, prompt: str) -> StoryResponse:
         agent = self.agent or create_story_agent(self.settings)
@@ -147,9 +162,53 @@ def _translate_exception(exc: Exception) -> StoryGenerationError:
     )
 
 
-def _with_canonical_story(response: StoryResponse, story: str) -> StoryResponse:
+def _with_canonical_story(
+    response: StoryResponse,
+    story: str,
+    continuation_shape: ContinuationShape,
+) -> StoryResponse:
     return StoryResponse(
         story=story,
-        option_a=response.option_a,
-        option_b=response.option_b,
+        option_a=_normalize_option(story, response.option_a, continuation_shape),
+        option_b=_normalize_option(story, response.option_b, continuation_shape),
     )
+
+
+def _normalize_option(
+    story: str,
+    option: str,
+    continuation_shape: ContinuationShape,
+) -> str:
+    normalized = _normalize_option_start(story, option)
+    if continuation_shape == "continue_sentence":
+        return _strip_terminal_sentence_punctuation(normalized)
+    return _ensure_terminal_sentence_punctuation(normalized)
+
+
+def _normalize_option_start(story: str, option: str) -> str:
+    if not sentence_has_ended(story):
+        return option
+
+    for index, char in enumerate(option):
+        if char.isalpha():
+            return option[:index] + char.upper() + option[index + 1 :]
+
+    return option
+
+
+def _strip_terminal_sentence_punctuation(option: str) -> str:
+    trailing_whitespace_length = len(option) - len(option.rstrip())
+    trailing_whitespace = option[-trailing_whitespace_length:] if trailing_whitespace_length else ""
+    stripped = option.rstrip()
+    while stripped.endswith((".", "!", "?")):
+        stripped = stripped[:-1].rstrip()
+    return f"{stripped}{trailing_whitespace}"
+
+
+def _ensure_terminal_sentence_punctuation(option: str) -> str:
+    stripped = option.rstrip()
+    if not stripped or stripped.endswith((".", "!", "?")):
+        return option
+
+    trailing_whitespace = option[len(stripped) :]
+    return f"{stripped}.{trailing_whitespace}"

@@ -5,6 +5,9 @@ from __future__ import annotations
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
+from rich.text import Text
+
+from leap_tree_game.ui.console import render_framed_screen
 
 OTHER_LABEL = "Other"
 
@@ -48,23 +51,28 @@ def ask_menu_choice(
     options: list[str],
     *,
     console: Console,
+    subtitle: str | None = None,
 ) -> str:
-    render_menu(title, options, console=console)
+    error: str | None = None
     while True:
+        render_menu_screen(title, options, console=console, subtitle=subtitle, error=error)
         raw = Prompt.ask(title, console=console)
         try:
             selected = resolve_menu_choice(raw, options, custom_value="__placeholder__")
         except ValueError as exc:
-            console.print(f"[yellow]{exc}[/yellow]")
+            error = str(exc)
             continue
 
         if selected == "__placeholder__":
-            custom = Prompt.ask("Custom value", console=console)
-            try:
-                return resolve_menu_choice(raw, options, custom_value=custom)
-            except ValueError as exc:
-                console.print(f"[yellow]{exc}[/yellow]")
-                continue
+            custom_error: str | None = None
+            while True:
+                render_custom_value_screen(title, console=console, subtitle=subtitle, error=custom_error)
+                custom = Prompt.ask("Custom value", console=console)
+                try:
+                    return resolve_menu_choice(raw, options, custom_value=custom)
+                except ValueError as exc:
+                    custom_error = str(exc)
+                    continue
 
         return selected
 
@@ -80,9 +88,45 @@ def ask_choice_command(*, console: Console) -> str:
 
 
 def render_menu(title: str, options: list[str], *, console: Console) -> None:
+    console.print(build_menu_table(title, options))
+
+
+def render_menu_screen(
+    title: str,
+    options: list[str],
+    *,
+    console: Console,
+    subtitle: str | None = None,
+    error: str | None = None,
+) -> None:
+    renderables = [
+        Text("Select an option by number or name.", style="dim"),
+        build_menu_table(title, options),
+    ]
+    if error:
+        renderables.append(Text(error, style="yellow"))
+    render_framed_screen(title, *renderables, active_console=console, subtitle=subtitle)
+
+
+def render_custom_value_screen(
+    title: str,
+    *,
+    console: Console,
+    subtitle: str | None = None,
+    error: str | None = None,
+) -> None:
+    renderables = [
+        Text(f"Enter a custom value for {title}.", style="dim"),
+    ]
+    if error:
+        renderables.append(Text(error, style="yellow"))
+    render_framed_screen(f"{title}: Other", *renderables, active_console=console, subtitle=subtitle)
+
+
+def build_menu_table(title: str, options: list[str]) -> Table:
     table = Table(title=title, show_header=False, box=None, padding=(0, 1))
     table.add_column("Number", justify="right", style="dim", no_wrap=True)
     table.add_column("Option", style="white")
     for index, option in enumerate(options, start=1):
         table.add_row(str(index), option)
-    console.print(table)
+    return table

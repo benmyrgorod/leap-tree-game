@@ -134,7 +134,11 @@ Prompt builder responsibilities:
 - Include the current canonical story-so-far on every subsequent turn.
 - Include the player’s selected option for next-turn requests.
 - Instruct the model to return only the structured JSON object matching `StoryResponse`.
-- Ask for two short, contrasting continuation options, each about 5-7 words, that can be appended directly to `story`.
+- Ask for two short, contrasting continuation options, each 3-7 words, that can be appended directly to `story`.
+- The prompt builder should choose the first sentence-ending instruction with 50% probability, then alternate instructions on later AI requests so the game has a visible 50/50 balance: either options should be the end of the sentence, or options should not end the sentence.
+- Normalize continuation options after model validation so options start with a capital letter when the current story ends a sentence.
+- Programmatically add a concrete beginning instruction to each prompt: start a new sentence when the current story has ended a sentence, otherwise continue the previous sentence.
+- Enforce the selected sentence-ending instruction after model validation, because providers may ignore prompt wording: strip terminal `.`, `!`, or `?` for "should not end the sentence" and add a period when needed for "should be the end of the sentence".
 - Instruct the model to keep `story` unchanged from the provided current story and put all new branch prose in `option_a` and `option_b`.
 - Avoid Markdown formatting requirements inside JSON values; Rich can handle terminal styling after validation.
 
@@ -181,6 +185,8 @@ The terminal should feel clean and spacious without becoming visually busy.
 Use:
 
 - A muted header with app name, provider, and model.
+- A fresh terminal screen for each setup question and each story-choice turn.
+- A muted full-screen frame around each question screen, similar to Claude Code.
 - Rich panels for story text.
 - Clear A/B choice rows with bold labels.
 - Color-coded status lines for prompts, warnings, and recoverable errors.
