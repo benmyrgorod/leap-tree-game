@@ -11,7 +11,7 @@ python3 -m pip install -r requirements.txt
 ## Configure
 
 ```bash
-python leap-tree-game/app.py setup
+python -m leap_tree_game.app setup
 ```
 
 The setup wizard writes `.env` with one of the supported providers:
@@ -25,16 +25,16 @@ Local Ollama does not require an API key when using `http://localhost:11434/v1`.
 ## Play
 
 ```bash
-python leap-tree-game/app.py
+python -m leap_tree_game.app
 ```
 
 Useful commands:
 
 ```bash
-python leap-tree-game/app.py --help
-python leap-tree-game/app.py doctor
-python leap-tree-game/app.py setup
-python leap-tree-game/app.py play
+python -m leap_tree_game.app --help
+python -m leap_tree_game.app doctor
+python -m leap_tree_game.app setup
+python -m leap_tree_game.app play
 ```
 
 ## Test

@@ -70,6 +70,16 @@ class GameState(BaseModel):
     setup: GameSetup
     turns: list[StoryTurn] = Field(default_factory=list)
 
+    @property
+    def turn_count(self) -> int:
+        return len(self.turns)
+
+    @property
+    def latest_turn(self) -> StoryTurn | None:
+        if not self.turns:
+            return None
+        return self.turns[-1]
+
     def append_response(
         self,
         response: StoryResponse,
@@ -105,6 +115,9 @@ class GameState(BaseModel):
             if turn.choice is not None:
                 return turn.choice
         return None
+
+    def next_turn_number(self) -> int:
+        return len(self.turns) + 1
 
     def current_story(self) -> str:
         """Return the canonical story with selected continuations appended."""

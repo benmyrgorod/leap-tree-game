@@ -39,6 +39,34 @@ class RunsSync(Protocol):
         ...
 
 
+@dataclass
+class TokenUsage:
+    """Normalized token counters tracked across model calls."""
+
+    requests: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
+
+    def add(self, raw: dict[str, int] | Any) -> None:
+        raw_usage = _extract_usage(raw)
+        self.requests += raw_usage.get("requests", 0)
+        self.input_tokens += raw_usage.get("input_tokens", 0)
+        self.output_tokens += raw_usage.get("output_tokens", 0)
+        self.cache_read_tokens += raw_usage.get("cache_read_tokens", 0)
+        self.cache_write_tokens += raw_usage.get("cache_write_tokens", 0)
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+    def summary(self) -> str:
+        return (
+            f"input={self.input_tokens}, output={self.output_tokens}, total={self.total_tokens}"
+        )
+
+
 def create_story_agent(settings: ProviderSettings):
     """Return a configured Pydantic AI agent for `StoryResponse` output."""
 
@@ -121,11 +149,7 @@ class StoryClient:
         default_factory=BalancedContinuationShapePicker
     )
     last_continuation_shape: ContinuationShape | None = None
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    total_cache_read_tokens: int = 0
-    total_cache_write_tokens: int = 0
-    total_requests: int = 0
+    token_usage: TokenUsage = field(default_factory=TokenUsage)
 
     def generate_initial(
         self,
@@ -220,14 +244,50 @@ class StoryClient:
 
     @property
     def total_tokens(self) -> int:
-        return self.total_input_tokens + self.total_output_tokens
+        return self.token_usage.total_tokens
+
+    @property
+    def total_input_tokens(self) -> int:
+        return self.token_usage.input_tokens
+
+    @total_input_tokens.setter
+    def total_input_tokens(self, value: int) -> None:
+        self.token_usage.input_tokens = value
+
+    @property
+    def total_output_tokens(self) -> int:
+        return self.token_usage.output_tokens
+
+    @total_output_tokens.setter
+    def total_output_tokens(self, value: int) -> None:
+        self.token_usage.output_tokens = value
+
+    @property
+    def total_cache_read_tokens(self) -> int:
+        return self.token_usage.cache_read_tokens
+
+    @total_cache_read_tokens.setter
+    def total_cache_read_tokens(self, value: int) -> None:
+        self.token_usage.cache_read_tokens = value
+
+    @property
+    def total_cache_write_tokens(self) -> int:
+        return self.token_usage.cache_write_tokens
+
+    @total_cache_write_tokens.setter
+    def total_cache_write_tokens(self, value: int) -> None:
+        self.token_usage.cache_write_tokens = value
+
+    @property
+    def total_requests(self) -> int:
+        return self.token_usage.requests
+
+    @total_requests.setter
+    def total_requests(self, value: int) -> None:
+        self.token_usage.requests = value
 
     def token_usage_summary(self) -> str:
-        return (
-            f"input={self.total_input_tokens}, "
-            f"output={self.total_output_tokens}, "
-            f"total={self.total_tokens}"
-        )
+        return self.token_usage.summary()
 
     def _run_sync(self, prompt: str, *, output_kind: Literal["story", "ascii"] = "story"):
         if output_kind == "ascii":
@@ -240,7 +300,7 @@ class StoryClient:
             agent = self.agent or create_story_agent(self.settings)
 
         result = agent.run_sync(prompt)
-        _accumulate_usage(self, result)
+        self.token_usage.add(result)
         return getattr(result, "output", result)
 
 
@@ -292,18 +352,6 @@ def _translate_exception(
         f"Story generation failed: {message}",
         original=exc,
     )
-
-
-def _accumulate_usage(client: StoryClient, result: Any) -> None:
-    usage = _extract_usage(result)
-    if not usage:
-        return
-
-    client.total_requests += usage.get("requests", 0)
-    client.total_input_tokens += usage.get("input_tokens", 0)
-    client.total_cache_write_tokens += usage.get("cache_write_tokens", 0)
-    client.total_cache_read_tokens += usage.get("cache_read_tokens", 0)
-    client.total_output_tokens += usage.get("output_tokens", 0)
 
 
 def _extract_usage(result: Any) -> dict[str, int]:

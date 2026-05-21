@@ -58,7 +58,7 @@ OPENINGS = [
     "Other",
 ]
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = PROJECT_ROOT / "prompts"
 CONTINUATION_SHAPE_INSTRUCTIONS: dict[ContinuationShape, str] = {
     "continue_sentence": (
