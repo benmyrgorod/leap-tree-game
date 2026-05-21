@@ -104,6 +104,7 @@ Implementation notes:
 
 - Load `.env` at startup.
 - If `.env` is missing, launch a Typer/Rich setup wizard.
+- The setup wizard should ask each question on a separate framed screen, including provider selection, model entry, and provider credential entry.
 - The wizard should ask for provider, model name, and only the API key or base URL needed for that provider.
 - Write `.env` with restrictive, simple key-value formatting.
 - Validate that provider is one of `openai`, `anthropic`, or `ollama`.
@@ -169,7 +170,7 @@ Recommended commands:
 Runtime flow:
 
 1. Render app title and provider/model summary.
-2. If config is missing or invalid, run setup wizard.
+2. If config is missing or invalid, run setup wizard (provider, model, API key step-by-step).
 3. Prompt for genre, setting, and story opening.
 4. Generate the first story response, with `story` equal to the selected opening.
 5. Render the current story and two continuation choices.

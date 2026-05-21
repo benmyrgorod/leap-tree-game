@@ -22,7 +22,7 @@ def resolve_menu_choice(
 
     normalized = selection.strip()
     if not normalized:
-        raise ValueError("Please enter a selection.")
+        raise ValueError("Please choose one of the listed options.")
 
     selected: str | None = None
     if normalized.isdigit():
@@ -96,6 +96,8 @@ def render_menu_screen(
     error: str | None = None,
 ) -> None:
     renderables = [
+        Text(title, style="bold"),
+        Text(""),
         Text("Select an option by number or name.", style="dim"),
         Text(""),
         build_menu_table(title, options),
@@ -121,7 +123,7 @@ def render_custom_value_screen(
 
 
 def build_menu_table(title: str, options: list[str]) -> Table:
-    table = Table(title=title, show_header=False, box=None, padding=(0, 1))
+    table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("Number", justify="right", style="dim", no_wrap=True)
     table.add_column("Option", style="white")
     for index, option in enumerate(options, start=1):

@@ -12,9 +12,16 @@ from rich.text import Text
 from rich.table import Table
 
 from leap_tree_game import __version__
-from leap_tree_game.config.settings import ConfigError, MissingConfigError, load_settings
+from leap_tree_game.config.settings import (
+    ConfigError,
+    MissingConfigError,
+    ProviderSettings,
+    load_settings,
+)
 from leap_tree_game.config.setup_wizard import run_setup_wizard
 from leap_tree_game.game.engine import GameEngine
+from leap_tree_game.game.state import GameSetup
+from leap_tree_game.providers.agent import StoryClient, StoryGenerationError
 from leap_tree_game.ui.console import (
     render_error,
     render_framed_screen,
@@ -50,6 +57,7 @@ def play() -> None:
     _ensure_runtime_dependencies()
     render_title(console)
     settings = _load_or_setup()
+    _verify_llm_connection(settings)
     GameEngine(settings, console=console).play()
 
 
@@ -99,7 +107,7 @@ def doctor() -> None:
     render_success("Everything looks ready.", active_console=console)
 
 
-def _load_or_setup():
+def _load_or_setup() -> ProviderSettings:
     try:
         return load_settings(Path(".env"))
     except MissingConfigError:
@@ -116,6 +124,42 @@ def _load_or_setup():
             active_console=console,
         )
         return run_setup_wizard(Path(".env"), console=console)
+
+
+def _verify_llm_connection(settings: ProviderSettings) -> None:
+    test_setup = GameSetup(
+        genre="Mystery",
+        setting="Modern Day",
+        opening="On a perfectly ordinary impossible day",
+    )
+    try:
+        with console.status("[dim]Verifying provider connection...[/dim]"):
+            StoryClient(settings).generate_initial(test_setup)
+    except StoryGenerationError as exc:
+        _clear_provider_env_file()
+        render_framed_screen(
+            "Leap Tree Game",
+            Text("Unable to generate a response from the configured LLM.", style="red"),
+            Text(""),
+            Text("Verify your API key, model, and network connection."),
+            Text("Your `.env` file was removed so setup will run again on the next launch."),
+            active_console=console,
+        )
+        render_error(str(exc), active_console=console)
+        raise typer.Exit(1) from exc
+
+
+def _clear_provider_env_file() -> None:
+    env_path = Path(".env")
+    if not env_path.exists():
+        return
+    try:
+        env_path.unlink()
+    except OSError as exc:
+        render_warning(
+            f"Could not remove `.env`: {exc}. Fix it manually before rerunning setup.",
+            active_console=console,
+        )
 
 
 def _status(condition: bool, detail: str) -> str:

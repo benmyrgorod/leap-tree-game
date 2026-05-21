@@ -14,6 +14,10 @@ Please see the prompt templates:
 - CLI application
 - Allow selecting predefined options or entering a custom “Other” option
 - Render each setup question and each story-choice turn on a fresh terminal screen
+- The setup wizard must render each question on a fresh terminal screen, including separate screens for:
+  - provider selection,
+  - model entry,
+  - API key entry.
 - Put a muted frame around every screen, similar to Claude Code's framed terminal layout
 - Use colors and/or bold text for different sections such as:
   - current story
