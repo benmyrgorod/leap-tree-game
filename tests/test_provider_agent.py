@@ -193,6 +193,82 @@ def test_story_client_default_picker_alternates_sentence_endings(monkeypatch) ->
     assert second.option_a == "into the silvered grove."
 
 
+def test_story_client_generates_ascii_art() -> None:
+    agent = FakeAgent(
+        "/\\\n/--\\\n||  ||\n||  ||\n\\--/"
+    )
+    client = _client(agent)
+
+    ascii_art = client.generate_ascii_art("The moon hung like a coin over the harbor.")
+
+    assert ascii_art == "/\\\n/--\\\n||  ||\n||  ||\n\\--/"
+
+
+def test_story_client_truncates_ascii_art_to_requested_height() -> None:
+    agent = FakeAgent(
+        "/\\\n|**|\n--\n|**|\n/--\\\n|**|"
+    )
+    client = _client(agent)
+
+    ascii_art = client.generate_ascii_art("Any opening line", height=3)
+
+    assert ascii_art == "/\\\n|**|\n--"
+
+
+def test_story_client_rejects_story_response_for_ascii_art() -> None:
+    class StoryLike:
+        story = "Every child in the village started to"
+        option_a = "begin dancing in the square"
+        option_b = "whisper about a strange light in the woods"
+
+    agent = FakeAgent(StoryLike())
+    client = _client(agent)
+
+    with pytest.raises(StoryGenerationError):
+        client.generate_ascii_art("Every child in the village started to")
+
+
+def test_story_client_rejects_prose_in_ascii_art() -> None:
+    agent = FakeAgent(
+        "Here is the scene:\n|\\_/|\n|o o|\n|_ _|"
+    )
+    client = _client(agent)
+
+    with pytest.raises(StoryGenerationError):
+        client.generate_ascii_art("A young lady mysteriously asked")
+
+
+def test_story_client_preserves_ascii_leading_spaces() -> None:
+    raw_art = (
+        "```\n"
+        "   /--\\\n"
+        "  /|  |\\\n"
+        " / |__| \\\n"
+        " ```\n"
+    )
+    agent = FakeAgent(raw_art)
+    client = _client(agent)
+
+    ascii_art = client.generate_ascii_art("A young lady mysteriously asked")
+
+    first_line = ascii_art.splitlines()[0]
+    assert first_line.startswith("   /--\\")
+
+
+def test_story_client_normalizes_ascii_canvas_to_requested_size() -> None:
+    agent = FakeAgent(" /--\\\n/\\__/")
+    client = _client(agent)
+
+    ascii_art = client.generate_ascii_art("The moon hung like a coin over the harbor.", width=8, height=4)
+    lines = ascii_art.splitlines()
+
+    assert len(lines) == 4
+    assert lines[0] == " /--\\   "
+    assert lines[1] == "/\\__/   "
+    assert lines[2] == "        "
+    assert lines[3] == "        "
+
+
 def _settings() -> ProviderSettings:
     return ProviderSettings(
         provider="openai",

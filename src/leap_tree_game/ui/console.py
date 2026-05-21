@@ -47,20 +47,29 @@ def render_turn_screen(
     *,
     active_console: Console = console,
     subtitle: str | None = None,
+    ascii_art: str | None = None,
 ) -> None:
+    frame_width = max(40, (active_console.width or 100) - 4)
+    renderables = []
+    if ascii_art:
+        for line in ascii_art.splitlines():
+            renderables.append(Text(line, no_wrap=True))
+        renderables.append(Text(""))
     story = Panel(
         response.story,
         title="[dim]Current story[/dim]",
         border_style="cyan",
         box=box.ROUNDED,
         padding=(1, 2),
-    ) 
+        width=frame_width,
+    )
     commands = Text(
         "\nChoose: a (first option), b (second option), g (regenerate), r (restart), q (quit)",
         style="dim",
     )
     render_framed_screen(
         "Leap Tree Game",
+        *renderables,
         story,
         build_choices_table(response),
         commands,

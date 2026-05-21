@@ -30,6 +30,30 @@ def test_turn_screen_renders_frame_story_and_choices() -> None:
     assert "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)" in output
 
 
+def test_turn_screen_renders_ascii_art_before_story() -> None:
+    console = Console(record=True, force_terminal=False, width=100)
+    ascii_art = "/--\\\n|**|\n\\--/"
+
+    render_turn_screen(
+        StoryResponse(
+            story="On a perfectly ordinary impossible day",
+            option_a="into the silvered grove",
+            option_b="toward the hidden spring.",
+        ),
+        ascii_art=ascii_art,
+        active_console=console,
+        subtitle="openai / gpt-5.2",
+    )
+
+    output = console.export_text()
+
+    scene_index = output.find(ascii_art.splitlines()[0])
+    story_index = output.find("Current story")
+    assert scene_index != -1
+    assert story_index != -1
+    assert scene_index < story_index
+
+
 def test_menu_screen_renders_as_framed_question() -> None:
     console = Console(record=True, force_terminal=False, width=80)
 

@@ -164,6 +164,26 @@ def test_regenerate_turn_preserves_previous_continuation_shape() -> None:
     assert client.next_calls[0][2] == "continue_sentence"
 
 
+def test_art_height_is_calculated_from_remaining_terminal_space() -> None:
+    response = StoryResponse(
+        story="On a perfectly ordinary impossible day",
+        option_a="into the silvered grove",
+        option_b="toward the hidden spring.",
+    )
+    engine = GameEngine(
+        ProviderSettings(provider="openai", model="gpt-5.2", openai_api_key="sk-test"),
+        console=Console(file=StringIO(), force_terminal=False, width=80, height=30),
+    )
+
+    art_height = engine._art_height(response)
+    expected_height = max(
+        3,
+        30 - engine._estimated_non_art_line_count(response, engine._art_width()) - 4,
+    )
+
+    assert art_height == expected_height
+
+
 def _state_after_current_turn(turn: StoryResponse) -> GameState:
     state = GameState(
         setup=GameSetup(

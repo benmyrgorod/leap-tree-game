@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Literal, Protocol
 
 from pydantic import ValidationError
 
@@ -12,6 +13,7 @@ from leap_tree_game.game.prompts import (
     BalancedContinuationShapePicker,
     ContinuationShape,
     build_initial_prompt,
+    build_ascii_art_prompt,
     build_next_prompt,
 )
 from leap_tree_game.game.state import Choice, GameSetup, GameState
@@ -49,6 +51,21 @@ def create_story_agent(settings: ProviderSettings):
 
     model = _create_model(settings)
     return Agent(model=model, output_type=_output_type(settings))
+
+
+def create_ascii_agent(settings: ProviderSettings):
+    """Return a configured Pydantic AI agent for plain-text (ASCII) output."""
+
+    try:
+        from pydantic_ai import Agent
+    except ImportError as exc:
+        raise StoryGenerationError(
+            "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`.",
+            original=exc,
+        ) from exc
+
+    model = _create_model(settings)
+    return Agent(model=model)
 
 
 def _create_model(settings: ProviderSettings):
@@ -98,6 +115,7 @@ def _output_type(settings: ProviderSettings):
 class StoryClient:
     settings: ProviderSettings
     agent: RunsSync | None = None
+    ascii_agent: RunsSync | None = None
     continuation_shape_picker: Callable[[], ContinuationShape] = field(
         default_factory=BalancedContinuationShapePicker
     )
@@ -146,10 +164,8 @@ class StoryClient:
         return _with_canonical_story(response, state.current_story(), continuation_shape)
 
     def generate(self, prompt: str) -> StoryResponse:
-        agent = self.agent or create_story_agent(self.settings)
         try:
-            result = agent.run_sync(prompt)
-            raw_output = getattr(result, "output", result)
+            raw_output = self._run_sync(prompt)
             return parse_story_response(raw_output)
         except StoryGenerationError:
             raise
@@ -160,6 +176,46 @@ class StoryClient:
             ) from exc
         except Exception as exc:
             raise _translate_exception(exc) from exc
+
+    def generate_ascii_art(
+        self,
+        story: str,
+        *,
+        width: int | None = None,
+        height: int | None = None,
+    ) -> str:
+        try:
+            raw_output = self._run_sync(
+                build_ascii_art_prompt(story, width=width, height=height),
+                output_kind="ascii",
+            )
+            return _coerce_ascii_art(
+                raw_output,
+                target_width=width,
+                target_height=height,
+            )
+        except StoryGenerationError:
+            raise
+        except (ValidationError, ValueError, TypeError) as exc:
+            raise StoryGenerationError(
+                "The model did not return usable ASCII art.",
+                original=exc,
+            ) from exc
+        except Exception as exc:
+            raise _translate_exception(exc) from exc
+
+    def _run_sync(self, prompt: str, *, output_kind: Literal["story", "ascii"] = "story"):
+        if output_kind == "ascii":
+            if self.agent is not None:
+                agent = self.agent
+            else:
+                agent = self.ascii_agent or create_ascii_agent(self.settings)
+                self.ascii_agent = agent
+        else:
+            agent = self.agent or create_story_agent(self.settings)
+
+        result = agent.run_sync(prompt)
+        return getattr(result, "output", result)
 
 
 def _translate_exception(exc: Exception) -> StoryGenerationError:
@@ -216,3 +272,78 @@ def _normalize_option(
     if continuation_shape == "continue_sentence":
         return strip_terminal_punctuation(normalized)
     return ensure_terminal_punctuation(normalized)
+
+
+def _coerce_ascii_art(
+    raw_output: object,
+    target_width: int | None = None,
+    target_height: int | None = None,
+) -> str:
+    if _is_story_response_text(raw_output):
+        raise ValueError("LLM returned structured story JSON instead of ASCII art.")
+    text = str(raw_output).strip("\n\r")
+    text = _strip_code_fence(text)
+    if not text:
+        raise ValueError("ASCII art response was empty.")
+    if _contains_prose_lines(text):
+        raise ValueError("ASCII art response contains prose text.")
+    if target_width is not None and target_width > 0:
+        lines = [
+            line[:target_width].ljust(target_width)
+            for line in text.splitlines()
+        ]
+        if len(lines) < target_height or target_height is None:
+            pad_target = target_height or 0
+            while len(lines) < pad_target:
+                lines.append(" " * target_width)
+        text = "\n".join(lines)
+    else:
+        lines = text.splitlines()
+
+    if target_height is not None and target_height > 0:
+        if len(lines) > target_height:
+            lines = lines[:target_height]
+            return "\n".join(lines).rstrip()
+    return text
+
+
+def _contains_prose_lines(text: str) -> bool:
+    for line in text.splitlines():
+        if re.search(r"[A-Za-z]{2,}", line):
+            return True
+    return False
+
+
+def _is_story_response_text(raw_output: object) -> bool:
+    if isinstance(raw_output, dict):
+        keys = set(raw_output.keys())
+        return {"story", "option_a", "option_b"} <= keys
+    if all(
+        hasattr(raw_output, attr)
+        for attr in ("story", "option_a", "option_b")
+    ):
+        return True
+
+    text = str(raw_output)
+    return (
+        text.startswith("story=")
+        and "option_a=" in text
+        and "option_b=" in text
+    )
+
+
+def _strip_code_fence(text: str) -> str:
+    lines = text.splitlines()
+    if not lines:
+        return text
+
+    if not lines[0].lstrip().startswith("```"):
+        return text
+
+    if len(lines) < 3:
+        return "\n".join(lines).strip("` \n\r")
+
+    if not lines[-1].lstrip().startswith("```"):
+        return "\n".join(lines).strip("` \n\r")
+
+    return "\n".join(lines[1:-1]).strip("\n\r")

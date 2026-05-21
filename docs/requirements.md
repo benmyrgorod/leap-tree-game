@@ -25,6 +25,9 @@ Please see the prompt templates:
   - prompts/errors
 - The UI should feel clean, spacious, and modern, somewhat similar to Claude Code
 - The story and choices should render on each turn in one framed screen.
+- Render the ASCII scene above the story text on each turn, derived from a separate model query and using the full available frame width with an explicitly calculated target height for remaining space.
+- Generate ASCII scenes from the most recent sentence while preserving continuity with the full story context.
+- The rendered ASCII scene must be image-only (no prose, no labels, no story text, no markdown, no preamble).
 
 ## Game Flow
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -121,6 +122,37 @@ def build_next_prompt(
             avoid_continuations
         ),
     )
+
+
+def build_ascii_art_prompt(
+    story: str,
+    *,
+    width: int | None = None,
+    height: int | None = None,
+) -> str:
+    template = _load_template("ascii_art.md")
+    target_width = str(width or 80)
+    target_height = str(height or 12)
+    focus_sentence = _extract_last_sentence(story)
+    return _replace_placeholders(
+        template,
+        story_context=story,
+        focus_sentence=focus_sentence,
+        width=target_width,
+        height=target_height,
+    )
+
+
+def _extract_last_sentence(story: str) -> str:
+    stripped = story.strip()
+    if not stripped:
+        return ""
+
+    match = re.findall(r"[^.!?]*[.!?]", stripped)
+    if not match:
+        return stripped
+
+    return match[-1].strip()
 
 
 def _load_template(name: str) -> str:

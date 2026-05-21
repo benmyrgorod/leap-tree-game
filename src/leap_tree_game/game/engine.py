@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import textwrap
+
 from rich.console import Console
 from rich.prompt import Confirm
 
@@ -33,6 +35,12 @@ class GameEngine:
         self.settings = settings
         self.story_client = story_client or StoryClient(settings)
         self.console = console
+
+    @staticmethod
+    def _estimate_wrapped_lines(text: str, width: int) -> int:
+        safe_width = max(1, width)
+        wrapped = textwrap.wrap(text, width=safe_width, break_long_words=False, break_on_hyphens=False)
+        return max(1, len(wrapped))
 
     def play(self) -> None:
         while True:
@@ -190,18 +198,79 @@ class GameEngine:
         return normalized_baseline == normalized_new
 
     def _render_turn(self, response) -> None:
+        ascii_art = self._generate_with_retry(
+            lambda: self.story_client.generate_ascii_art(
+                response.story,
+                width=self._art_width(),
+                height=self._art_height(response),
+            ),
+            status_message="[dim]Generating ASCII scene...[/dim]",
+            ask_to_retry=False,
+        )
         render_turn_screen(
             response,
             active_console=self.console,
             subtitle=self.settings.summary(),
+            ascii_art=ascii_art,
         )
 
-    def _generate_with_retry(self, operation):
+    def _art_width(self) -> int:
+        return max(40, (self.console.width or 100) - 4)
+
+    def _art_height(self, response) -> int:
+        total_lines = self.console.height or 24
+        frame_width = self._art_width()
+        non_art_lines = self._estimated_non_art_line_count(response, frame_width)
+        available = total_lines - non_art_lines
+        return max(3, available - 4)
+
+    @staticmethod
+    def _choices_command_lines(width: int) -> int:
+        command = "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)"
+        command_body_lines = max(1, len(
+            textwrap.wrap(
+                command,
+                width=max(1, width),
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+        ))
+        return 1 + command_body_lines
+
+    def _estimated_non_art_line_count(self, response, width: int) -> int:
+        # Outer frame lines are always visible regardless of art presence.
+        outer_lines = 4
+
+        story_text_width = max(24, width - 6)
+        story_text_lines = self._estimate_wrapped_lines(response.story, width=story_text_width)
+        story_panel_lines = story_text_lines + 4
+
+        option_width = max(24, width - 14)
+        option_lines = max(
+            self._estimate_wrapped_lines(response.option_a, option_width),
+            self._estimate_wrapped_lines(response.option_b, option_width),
+        )
+        # Build options includes one intentionally blank first row.
+        choices_lines = (option_lines * 2) + 1
+
+        command_lines = self._choices_command_lines(max(24, width - 4))
+
+        return outer_lines + story_panel_lines + choices_lines + command_lines
+
+    def _generate_with_retry(
+        self,
+        operation,
+        *,
+        status_message: str = "[dim]Asking the story engine...[/dim]",
+        ask_to_retry: bool = True,
+    ):
         while True:
             try:
-                with self.console.status("[dim]Asking the story engine...[/dim]"):
+                with self.console.status(status_message):
                     return operation()
             except StoryGenerationError as exc:
                 render_error(str(exc), active_console=self.console)
+                if not ask_to_retry:
+                    return None
                 if not Confirm.ask("Retry?", default=True, console=self.console):
                     return None

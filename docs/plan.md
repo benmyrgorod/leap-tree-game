@@ -138,6 +138,9 @@ Prompt builder responsibilities:
 - Ask for two short, contrasting continuation options, each 3-7 words, that can be appended directly to `story`.
 - The prompt builder should choose the first sentence-ending instruction with 50% probability, then alternate instructions on later AI requests so the game has a visible 50/50 balance: either options should be the end of the sentence, or options should not end the sentence.
 - When a turn is regenerated (`g`), keep the same sentence-shape for that turn (continue-sentence or end-sentence) so the punctuation behavior does not randomly flip.
+- Before the story panel on each turn, calculate remaining frame height, include that target line height in a separate LLM query for ASCII art, and render the image above the text without its own bordered frame.
+- Feed the ASCII-art prompt with both the full story context and the last complete sentence so scenes stay consistent while focusing on immediate action.
+- Enforce that the ASCII art response is image-only with no prose (no labels, no story text, no explanations).
 - Normalize continuation options after model validation so options start with a capital letter when the current story ends a sentence.
 - Programmatically add a concrete beginning instruction to each prompt: start a new sentence when the current story has ended a sentence, otherwise continue the previous sentence.
 - Enforce the selected sentence-ending instruction after model validation, because providers may ignore prompt wording: strip terminal `.`, `!`, or `?` for "should not end the sentence" and add a period when needed for "should be the end of the sentence".
@@ -174,7 +177,7 @@ Runtime flow:
 2. If config is missing or invalid, run setup wizard (provider, model, API key step-by-step).
 3. Prompt for genre, setting, and story opening.
 4. Generate the first story response, with `story` equal to the selected opening.
-5. Render the current story and two continuation choices.
+5. Render an ASCII scene for the current story using a calculated target height for remaining space, then render the story and two continuation choices.
 6. Prompt for A, B, regenerate, restart, or quit.
 7. Append the selected continuation text to the canonical story in game state.
 8. Generate the next story response with full history and current canonical story.
