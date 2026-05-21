@@ -4,6 +4,7 @@ from __future__ import annotations
 
 SENTENCE_END_MARKERS = (".", "!", "?")
 CONTINUATION_PREFIXES = (",", ".", ";", ":", "!", "?", ")", "]", "}")
+TRAILING_PUNCTUATION = (",", ".", "!", "?", ";", ":")
 
 
 def sentence_has_ended(text: str) -> bool:
@@ -24,6 +25,8 @@ def append_continuation(story: str, continuation: str) -> str:
         return tail
 
     if tail.startswith(CONTINUATION_PREFIXES):
+        while base.endswith(TRAILING_PUNCTUATION):
+            base = base[:-1].rstrip()
         return f"{base}{tail}"
 
     return f"{base} {tail}"

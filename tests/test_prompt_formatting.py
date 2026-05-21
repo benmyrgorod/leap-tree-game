@@ -132,3 +132,59 @@ def test_sentence_has_ended_detects_common_sentence_punctuation() -> None:
     assert sentence_has_ended("The sun vanished!")
     assert sentence_has_ended("The sun vanished?")
     assert not sentence_has_ended("The sun vanished")
+
+
+def test_initial_prompt_includes_regeneration_avoidance_instruction() -> None:
+    setup = GameSetup(
+        genre="Mystery",
+        setting="Modern Day",
+        opening="A young lady mysteriously asked",
+    )
+
+    prompt = build_initial_prompt(
+        setup,
+        continuation_shape="continue_sentence",
+        avoid_continuations=("the fox listened.", "the moon smiled."),
+    )
+
+    assert (
+        'For this regeneration, avoid repeating the exact option text from the previous turn. '
+        '"the fox listened." and "the moon smiled." should both be avoided.'
+    ) in prompt
+
+
+def test_next_prompt_includes_regeneration_avoidance_instruction() -> None:
+    state = GameState(
+        setup=GameSetup(
+            genre="Mystery",
+            setting="Modern Day",
+            opening="A young lady mysteriously asked",
+        )
+    )
+    state.append_response(
+        StoryResponse(
+            story="A young lady mysteriously asked",
+            option_a="the fox listened.",
+            option_b="the moon smiled.",
+        )
+    )
+    choice = state.choose("A")
+    state.append_response(
+        StoryResponse(
+            story="A young lady mysteriously asked the fox listened.",
+            option_a="a bell rang.",
+            option_b="water turned silver.",
+        )
+    )
+
+    prompt = build_next_prompt(
+        state,
+        choice,
+        continuation_shape="end_sentence",
+        avoid_continuations=("the fox listened.", "the moon smiled."),
+    )
+
+    assert (
+        'For this regeneration, avoid repeating the exact option text from the previous turn. '
+        '"the fox listened." and "the moon smiled." should both be avoided.'
+    ) in prompt

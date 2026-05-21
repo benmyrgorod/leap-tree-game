@@ -55,3 +55,61 @@ def test_current_story_appends_selected_continuation() -> None:
     state.choose("A")
 
     assert state.current_story() == "On a perfectly ordinary impossible day, a brass cloud knocked politely."
+
+
+def test_game_state_replace_latest_turn() -> None:
+    state = GameState(
+        setup=GameSetup(
+            genre="Mystery",
+            setting="Modern Day",
+            opening="Open field, no walls.",
+        )
+    )
+    state.append_response(
+        StoryResponse(
+            story="Open field, no walls.",
+            option_a="the fog rolled.",
+            option_b="silence listened.",
+        )
+    )
+    state.replace_latest_turn(
+        StoryResponse(
+            story="Open field, no walls.",
+            option_a="a raven arrived.",
+            option_b="the clock reversed.",
+        )
+    )
+
+    assert state.turns[-1].option_a == "a raven arrived."
+    assert state.turns[-1].option_b == "the clock reversed."
+
+
+def test_game_state_latest_choice_finds_recent_choice() -> None:
+    state = GameState(
+        setup=GameSetup(
+            genre="Mystery",
+            setting="Modern Day",
+            opening="Open field, no walls.",
+        )
+    )
+    state.append_response(
+        StoryResponse(
+            story="Open field, no walls.",
+            option_a="the fog rolled.",
+            option_b="silence listened.",
+        )
+    )
+    state.choose("A")
+    state.append_response(
+        StoryResponse(
+            story="Open field, no walls, the fog rolled.",
+            option_a="and then dawn.",
+            option_b="and then dusk.",
+        )
+    )
+
+    latest_choice = state.latest_choice()
+
+    assert latest_choice is not None
+    assert latest_choice.label == "A"
+    assert latest_choice.text == "the fog rolled."

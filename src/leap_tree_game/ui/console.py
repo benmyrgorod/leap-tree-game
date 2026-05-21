@@ -24,6 +24,7 @@ def build_choices_table(response: StoryResponse) -> Table:
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("Label", style="bold magenta", no_wrap=True)
     table.add_column("Option", style="white")
+    table.add_row("", "")
     table.add_row("A.", response.option_a)
     table.add_row("B.", response.option_b)
     return table
@@ -53,9 +54,9 @@ def render_turn_screen(
         border_style="cyan",
         box=box.ROUNDED,
         padding=(1, 2),
-    )
+    ) 
     commands = Text(
-        "\nChoose: a (first option), b (second option), r (restart), q (quit)",
+        "\nChoose: a (first option), b (second option), g (regenerate), r (restart), q (quit)",
         style="dim",
     )
     render_framed_screen(

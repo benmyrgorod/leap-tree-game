@@ -81,6 +81,7 @@ def build_initial_prompt(
     setup: GameSetup,
     *,
     continuation_shape: ContinuationShape | None = None,
+    avoid_continuations: tuple[str, str] | None = None,
 ) -> str:
     template = _load_template("initial.md")
     return _replace_placeholders(
@@ -90,6 +91,9 @@ def build_initial_prompt(
         opening=setup.opening,
         continuation_start_instruction=_continuation_start_instruction(setup.opening),
         continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
+        regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
+            avoid_continuations
+        ),
     )
 
 
@@ -98,6 +102,7 @@ def build_next_prompt(
     choice: Choice,
     *,
     continuation_shape: ContinuationShape | None = None,
+    avoid_continuations: tuple[str, str] | None = None,
 ) -> str:
     template = _load_template("next.md")
     current_story = state.current_story()
@@ -112,6 +117,9 @@ def build_next_prompt(
         choice_text=choice.text,
         continuation_start_instruction=_continuation_start_instruction(current_story),
         continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
+        regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
+            avoid_continuations
+        ),
     )
 
 
@@ -160,3 +168,25 @@ def _continuation_start_instruction(story: str) -> str:
     if sentence_has_ended(story):
         return CONTINUATION_START_INSTRUCTIONS["start_new_sentence"]
     return CONTINUATION_START_INSTRUCTIONS["continue_previous_sentence"]
+
+
+def _regeneration_avoidance_instruction(
+    avoid_continuations: tuple[str, str] | None,
+) -> str:
+    if not avoid_continuations:
+        return ""
+
+    option_a, option_b = avoid_continuations
+    if not option_a and not option_b:
+        return ""
+
+    if option_a == option_b:
+        return (
+            "For this regeneration, avoid returning that exact previous option text. "
+            f'Avoid "{option_a}".'
+        )
+
+    return (
+        "For this regeneration, avoid repeating the exact option text from the previous turn. "
+        f'"{option_a}" and "{option_b}" should both be avoided.'
+    )

@@ -32,10 +32,11 @@ Please see the prompt templates:
 2. The player selects an AI provider/model and enters API keys
 3. The player fills out CLI forms for the initial prompt
 4. The AI outputs the selected opening unchanged as the current story and generates two continuation options
-5. The player selects one continuation
+5. The player selects one continuation, or chooses regenerate (`g`) to request a new pair of options for the same turn
 6. The selected continuation is appended to the current story
 7. The full story history is sent to the AI on every turn
-8. Steps 4-7 repeat continuously until the player exits the application
+8. When regenerate is used, requested options should avoid repeating the previous exact pair
+9. Steps 4-8 repeat continuously until the player exits the application
 
 ## Technical Requirements
 
@@ -79,6 +80,8 @@ Each continuation option should be 3-7 words so choices stay quick to scan. The 
 
 - The options should be the end of the sentence.
 - The options should not end the sentence.
+
+On regeneration (`g`), keep the existing sentence-shape for that turn so a period-ending mode does not unexpectedly change.
 
 If the current story ends a sentence, each continuation option must start with a capital letter before it is rendered or appended.
 The prompt must also include a concrete beginning instruction derived from the current story text: if the current story ends a sentence, instruct options to start a new sentence; otherwise, instruct options to continue the previous sentence.

@@ -137,6 +137,7 @@ Prompt builder responsibilities:
 - Instruct the model to return only the structured JSON object matching `StoryResponse`.
 - Ask for two short, contrasting continuation options, each 3-7 words, that can be appended directly to `story`.
 - The prompt builder should choose the first sentence-ending instruction with 50% probability, then alternate instructions on later AI requests so the game has a visible 50/50 balance: either options should be the end of the sentence, or options should not end the sentence.
+- When a turn is regenerated (`g`), keep the same sentence-shape for that turn (continue-sentence or end-sentence) so the punctuation behavior does not randomly flip.
 - Normalize continuation options after model validation so options start with a capital letter when the current story ends a sentence.
 - Programmatically add a concrete beginning instruction to each prompt: start a new sentence when the current story has ended a sentence, otherwise continue the previous sentence.
 - Enforce the selected sentence-ending instruction after model validation, because providers may ignore prompt wording: strip terminal `.`, `!`, or `?` for "should not end the sentence" and add a period when needed for "should be the end of the sentence".
@@ -174,10 +175,11 @@ Runtime flow:
 3. Prompt for genre, setting, and story opening.
 4. Generate the first story response, with `story` equal to the selected opening.
 5. Render the current story and two continuation choices.
-6. Prompt for A, B, restart, or quit.
+6. Prompt for A, B, regenerate, restart, or quit.
 7. Append the selected continuation text to the canonical story in game state.
 8. Generate the next story response with full history and current canonical story.
-9. Repeat until the player quits or restarts.
+9. When regenerate is chosen, request a new pair of options and prefer values that are not identical to the previous pair.
+10. Repeat until the player quits or restarts.
 
 ## Rich UI Design
 
@@ -192,7 +194,7 @@ Use:
 - Clear A/B choice rows with bold labels.
 - Color-coded status lines for prompts, warnings, and recoverable errors.
 - A framed area that renders the current story and choice set.
-- Short commands at choice prompts: `a`, `b`, `r`, `q`.
+- Short commands at choice prompts: `a`, `b`, `g`, `r`, `q`.
 
 Render choices only after the final `StoryResponse` validates.
 
@@ -284,7 +286,7 @@ Acceptance criteria:
 
 - Build Rich forms for genre, setting, and opening.
 - Build story and choice rendering.
-- Build repeat loop with `a`, `b`, `r`, and `q`.
+- Build repeat loop with `a`, `b`, `g`, `r`, and `q`.
 - Add framed turn rendering updates for every response.
 
 Acceptance criteria:

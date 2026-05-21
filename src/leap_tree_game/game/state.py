@@ -10,6 +10,7 @@ from leap_tree_game.models.story import StoryResponse
 from leap_tree_game.game.text import append_continuation
 
 ChoiceLabel = Literal["A", "B"]
+ContinuationShape = Literal["continue_sentence", "end_sentence"]
 
 
 class NonEmptyTextModel(BaseModel):
@@ -45,13 +46,20 @@ class StoryTurn(NonEmptyTextModel):
     option_a: str
     option_b: str
     choice: Choice | None = None
+    continuation_shape: ContinuationShape | None = None
 
     @classmethod
-    def from_response(cls, response: StoryResponse) -> "StoryTurn":
+    def from_response(
+        cls,
+        response: StoryResponse,
+        *,
+        continuation_shape: ContinuationShape | None = None,
+    ) -> "StoryTurn":
         return cls(
             story=response.story,
             option_a=response.option_a,
             option_b=response.option_b,
+            continuation_shape=continuation_shape,
         )
 
     def option_text(self, label: ChoiceLabel) -> str:
@@ -62,9 +70,26 @@ class GameState(BaseModel):
     setup: GameSetup
     turns: list[StoryTurn] = Field(default_factory=list)
 
-    def append_response(self, response: StoryResponse) -> StoryTurn:
-        turn = StoryTurn.from_response(response)
+    def append_response(
+        self,
+        response: StoryResponse,
+        *,
+        continuation_shape: ContinuationShape | None = None,
+    ) -> StoryTurn:
+        turn = StoryTurn.from_response(response, continuation_shape=continuation_shape)
         self.turns.append(turn)
+        return turn
+
+    def replace_latest_turn(
+        self,
+        response: StoryResponse,
+        *,
+        continuation_shape: ContinuationShape | None = None,
+    ) -> StoryTurn:
+        if not self.turns:
+            raise ValueError("Cannot replace turn before any responses exist.")
+        turn = StoryTurn.from_response(response, continuation_shape=continuation_shape)
+        self.turns[-1] = turn
         return turn
 
     def choose(self, label: ChoiceLabel) -> Choice:
@@ -74,6 +99,12 @@ class GameState(BaseModel):
         choice = Choice(label=label, text=turn.option_text(label))
         turn.choice = choice
         return choice
+
+    def latest_choice(self) -> Choice | None:
+        for turn in reversed(self.turns):
+            if turn.choice is not None:
+                return turn.choice
+        return None
 
     def current_story(self) -> str:
         """Return the canonical story with selected continuations appended."""
@@ -107,4 +138,3 @@ class GameState(BaseModel):
                 lines.append(f"Turn {index} story after choice: {story_after_choice}")
 
         return "\n".join(lines)
-

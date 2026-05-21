@@ -101,18 +101,47 @@ class StoryClient:
     continuation_shape_picker: Callable[[], ContinuationShape] = field(
         default_factory=BalancedContinuationShapePicker
     )
+    last_continuation_shape: ContinuationShape | None = None
 
-    def generate_initial(self, setup: GameSetup) -> StoryResponse:
-        continuation_shape = self.continuation_shape_picker()
+    def generate_initial(
+        self,
+        setup: GameSetup,
+        *,
+        avoid_continuations: tuple[str, str] | None = None,
+        continuation_shape: ContinuationShape | None = None,
+    ) -> StoryResponse:
+        continuation_shape = (
+            continuation_shape or self.continuation_shape_picker()
+        )
+        self.last_continuation_shape = continuation_shape
         response = self.generate(
-            build_initial_prompt(setup, continuation_shape=continuation_shape)
+            build_initial_prompt(
+                setup,
+                continuation_shape=continuation_shape,
+                avoid_continuations=avoid_continuations,
+            )
         )
         return _with_canonical_story(response, setup.opening, continuation_shape)
 
-    def generate_next(self, state: GameState, choice: Choice) -> StoryResponse:
-        continuation_shape = self.continuation_shape_picker()
+    def generate_next(
+        self,
+        state: GameState,
+        choice: Choice,
+        *,
+        avoid_continuations: tuple[str, str] | None = None,
+        continuation_shape: ContinuationShape | None = None,
+    ) -> StoryResponse:
+        continuation_shape = (
+            continuation_shape or self.continuation_shape_picker()
+        )
+        self.last_continuation_shape = continuation_shape
         response = self.generate(
-            build_next_prompt(state, choice, continuation_shape=continuation_shape)
+            build_next_prompt(
+                state,
+                choice,
+                continuation_shape=continuation_shape,
+                avoid_continuations=avoid_continuations,
+            )
         )
         return _with_canonical_story(response, state.current_story(), continuation_shape)
 

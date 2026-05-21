@@ -9,6 +9,7 @@ from rich.text import Text
 
 from leap_tree_game.ui.console import render_framed_screen
 
+APP_FRAME_TITLE = "Leap Tree Game"
 OTHER_LABEL = "Other"
 
 
@@ -80,7 +81,7 @@ def ask_menu_choice(
 def ask_choice_command(*, console: Console) -> str:
     return Prompt.ask(
         "Choose",
-        choices=["a", "b", "r", "q"],
+        choices=["a", "b", "g", "r", "q"],
         default="a",
         show_choices=True,
         console=console,
@@ -104,7 +105,7 @@ def render_menu_screen(
     ]
     if error:
         renderables.append(Text(error, style="yellow"))
-    render_framed_screen(title, *renderables, active_console=console, subtitle=subtitle)
+    render_framed_screen(APP_FRAME_TITLE, *renderables, active_console=console, subtitle=subtitle)
 
 
 def render_custom_value_screen(
@@ -119,7 +120,7 @@ def render_custom_value_screen(
     ]
     if error:
         renderables.append(Text(error, style="yellow"))
-    render_framed_screen(f"{title}: Other", *renderables, active_console=console, subtitle=subtitle)
+    render_framed_screen(APP_FRAME_TITLE, *renderables, active_console=console, subtitle=subtitle)
 
 
 def build_menu_table(title: str, options: list[str]) -> Table:

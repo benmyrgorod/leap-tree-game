@@ -21,6 +21,7 @@ Each option must be actual prose that can be appended directly to "story" if sel
 Each option should be 3-7 words.
 {continuation_start_instruction}
 {continuation_shape_instruction}
+{regeneration_avoidance_instruction}
 Do not make the options action labels, menu commands, summaries, or instructions.
 
 Return only a valid JSON object with this exact shape:
