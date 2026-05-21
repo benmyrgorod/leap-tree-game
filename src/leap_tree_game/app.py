@@ -19,6 +19,8 @@ from leap_tree_game.ui.console import render_error, render_success, render_title
 app = typer.Typer(add_completion=False, invoke_without_command=True, no_args_is_help=False)
 console = Console()
 
+REQUIRED_RUNTIME_MODULES = ("pydantic", "typer", "rich", "dotenv", "pydantic_ai")
+
 
 @app.callback(invoke_without_command=True)
 def callback(
@@ -38,6 +40,7 @@ def callback(
 def play() -> None:
     """Start the normal play flow."""
 
+    _ensure_runtime_dependencies()
     render_title(console)
     settings = _load_or_setup()
     GameEngine(settings, console=console).play()
@@ -67,7 +70,7 @@ def doctor() -> None:
     ok = ok and python_ok
     table.add_row("Python 3.12+", _status(python_ok, sys.version.split()[0]))
 
-    for module_name in ["pydantic", "typer", "rich", "dotenv", "pydantic_ai"]:
+    for module_name in REQUIRED_RUNTIME_MODULES:
         present = importlib.util.find_spec(module_name) is not None
         ok = ok and present
         table.add_row(module_name, _status(present, "installed" if present else "missing"))
@@ -104,6 +107,27 @@ def _status(condition: bool, detail: str) -> str:
     color = "green" if condition else "red"
     label = "ok" if condition else "fail"
     return f"[{color}]{label}[/{color}] [dim]{detail}[/dim]"
+
+
+def _ensure_runtime_dependencies() -> None:
+    missing = _missing_runtime_dependencies()
+    if not missing:
+        return
+    render_error("Missing runtime dependencies detected.", active_console=console)
+    render_error(
+        f"Install requirements and retry: python3 -m pip install -r requirements.txt",
+        active_console=console,
+    )
+    render_warning(f"Missing modules: {', '.join(missing)}", active_console=console)
+    raise typer.Exit(1)
+
+
+def _missing_runtime_dependencies() -> list[str]:
+    missing = []
+    for module_name in REQUIRED_RUNTIME_MODULES:
+        if importlib.util.find_spec(module_name) is None:
+            missing.append(module_name)
+    return missing
 
 
 def main() -> None:
