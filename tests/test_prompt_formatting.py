@@ -25,7 +25,9 @@ def test_initial_prompt_includes_setup_and_json_contract() -> None:
     assert "Three strangers accidentally brought" in prompt
     assert '"story"' in prompt
     assert '"option_a"' in prompt
-    assert "around five words" in prompt
+    assert "Return the opening line unchanged" in prompt
+    assert "appended directly" in prompt
+    assert "about 5-7 words" in prompt
 
 
 def test_next_prompt_includes_full_history_and_selected_choice() -> None:
@@ -38,9 +40,9 @@ def test_next_prompt_includes_full_history_and_selected_choice() -> None:
     )
     state.append_response(
         StoryResponse(
-            story="A sheriff discovered every horse had joined a choir.",
-            option_a="Conduct the horses",
-            option_b="Arrest the mayor",
+            story="On a perfectly ordinary impossible day",
+            option_a=", a sheriff discovered singing horses.",
+            option_b=", the mayor outlawed breakfast.",
         )
     )
     choice = state.choose("A")
@@ -49,7 +51,9 @@ def test_next_prompt_includes_full_history_and_selected_choice() -> None:
 
     assert "Comedy" in prompt
     assert "Wild West" in prompt
-    assert "A sheriff discovered every horse had joined a choir." in prompt
-    assert "Turn 1 option A: Conduct the horses" in prompt
-    assert "selected option A: Conduct the horses" in prompt
-    assert "The player selected option A: Conduct the horses" in prompt
+    assert "On a perfectly ordinary impossible day, a sheriff discovered singing horses." in prompt
+    assert "Turn 1 option A continuation: , a sheriff discovered singing horses." in prompt
+    assert "selected option A continuation: , a sheriff discovered singing horses." in prompt
+    assert "The player selected option A: , a sheriff discovered singing horses." in prompt
+    assert "Current canonical story so far:" in prompt
+    assert "about 5-7 words" in prompt

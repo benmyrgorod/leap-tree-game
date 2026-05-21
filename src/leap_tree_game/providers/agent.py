@@ -90,10 +90,12 @@ class StoryClient:
     agent: RunsSync | None = None
 
     def generate_initial(self, setup: GameSetup) -> StoryResponse:
-        return self.generate(build_initial_prompt(setup))
+        response = self.generate(build_initial_prompt(setup))
+        return _with_canonical_story(response, setup.opening)
 
     def generate_next(self, state: GameState, choice: Choice) -> StoryResponse:
-        return self.generate(build_next_prompt(state, choice))
+        response = self.generate(build_next_prompt(state, choice))
+        return _with_canonical_story(response, state.current_story())
 
     def generate(self, prompt: str) -> StoryResponse:
         agent = self.agent or create_story_agent(self.settings)
@@ -142,4 +144,12 @@ def _translate_exception(exc: Exception) -> StoryGenerationError:
     return StoryGenerationError(
         f"Story generation failed: {message}",
         original=exc,
+    )
+
+
+def _with_canonical_story(response: StoryResponse, story: str) -> StoryResponse:
+    return StoryResponse(
+        story=story,
+        option_a=response.option_a,
+        option_b=response.option_b,
     )

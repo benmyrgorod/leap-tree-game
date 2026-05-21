@@ -25,9 +25,9 @@ class FakeAgent:
 def test_story_client_accepts_fake_agent_valid_response() -> None:
     agent = FakeAgent(
         {
-            "story": "The apple tree opened one bright eye.",
-            "option_a": "Ask for directions",
-            "option_b": "Climb without permission",
+            "story": "The model tried to rewrite this.",
+            "option_a": ", a road introduced itself.",
+            "option_b": ", the hill refused him.",
         }
     )
     client = StoryClient(_settings(), agent=agent)
@@ -36,7 +36,8 @@ def test_story_client_accepts_fake_agent_valid_response() -> None:
         GameSetup(genre="Fantasy", setting="Middle Ages", opening="Once upon a time in a distant land")
     )
 
-    assert response.option_b == "Climb without permission"
+    assert response.option_b == ", the hill refused him."
+    assert response.story == "Once upon a time in a distant land"
     assert "Fantasy" in agent.prompts[0]
 
 
@@ -70,9 +71,10 @@ def test_story_client_next_prompt_includes_choice() -> None:
     )
     choice = state.choose("A")
 
-    client.generate_next(state, choice)
+    response = client.generate_next(state, choice)
 
     assert "The player selected option A" in agent.prompts[-1]
+    assert response.story == "Shortly before reality lost control Step onto leaves"
 
 
 def _settings() -> ProviderSettings:

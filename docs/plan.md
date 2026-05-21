@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Leap Tree Game will start as a small Python 3.12+ CLI MVP: the player configures an AI provider, chooses a genre, setting, and opening, then repeatedly selects between two AI-generated continuation options. The implementation should stay narrow, testable, and easy to run with `python leap-tree-game/app.py`.
+Leap Tree Game will start as a small Python 3.12+ CLI MVP: the player configures an AI provider, chooses a genre, setting, and opening, then repeatedly selects between two AI-generated continuation options. The implementation should keep the selected opening and accumulated story path canonical, stay narrow and testable, and remain easy to run with `python leap-tree-game/app.py`.
 
 ## References
 
@@ -64,12 +64,23 @@ class StoryResponse(BaseModel):
     option_b: str
 ```
 
+`story` is the current canonical story-so-far, not newly generated branch prose. On the first turn it must be exactly the selected opening unchanged. On later turns it must be the previous canonical story plus the continuation selected by the player. The app should normalize this field from local state after parsing a valid response, so a model cannot rewrite the opening or silently jump to an unselected branch.
+
+`option_a` and `option_b` are the actual branch continuations that may be appended to `story`; they are not action labels or summaries. A correct first response for the opening `On a perfectly ordinary impossible day` should read conceptually like:
+
+```text
+On a perfectly ordinary impossible day
+
+A. a brass cloud knocked politely.
+B. the town clock ran backward.
+```
+
 Add internal models for:
 
 - `GameSetup`: selected `genre`, `setting`, and `opening`.
 - `Choice`: selected label and text.
-- `StoryTurn`: AI story, options, and the choice that followed it.
-- `GameState`: setup, ordered turns, and helpers to build full unsummarized story history.
+- `StoryTurn`: canonical story before the next choice, continuation options, and the choice that followed it.
+- `GameState`: setup, ordered turns, helpers to build full unsummarized story history, and helpers to derive the current canonical story by appending selected continuations.
 - `ProviderSettings`: provider, model name, and provider-specific connection settings.
 
 Validation should reject empty `story`, `option_a`, and `option_b`, because the UI cannot recover from blank continuation choices.
@@ -120,9 +131,11 @@ Prompt builder responsibilities:
 
 - Include selected genre, setting, and opening on the first turn.
 - Include the full unsummarized story history on every subsequent turn.
+- Include the current canonical story-so-far on every subsequent turn.
 - Include the player’s selected option for next-turn requests.
 - Instruct the model to return only the structured JSON object matching `StoryResponse`.
-- Ask for two short, contrasting continuation options, around five words each.
+- Ask for two short, contrasting continuation options, each about 5-7 words, that can be appended directly to `story`.
+- Instruct the model to keep `story` unchanged from the provided current story and put all new branch prose in `option_a` and `option_b`.
 - Avoid Markdown formatting requirements inside JSON values; Rich can handle terminal styling after validation.
 
 Keep predefined options in code constants so tests can cover them and the UI can render them consistently:
@@ -154,11 +167,11 @@ Runtime flow:
 1. Render app title and provider/model summary.
 2. If config is missing or invalid, run setup wizard.
 3. Prompt for genre, setting, and story opening.
-4. Generate and stream the first story response.
-5. Render story continuation and two choices.
+4. Generate and stream the first story response, with `story` equal to the selected opening.
+5. Render the current story and two continuation choices.
 6. Prompt for A, B, restart, or quit.
-7. Append the selected choice to game state.
-8. Generate the next story response with full history.
+7. Append the selected continuation text to the canonical story in game state.
+8. Generate the next story response with full history and current canonical story.
 9. Repeat until the player quits or restarts.
 
 ## Rich UI Design
@@ -245,6 +258,7 @@ Acceptance criteria:
 Acceptance criteria:
 
 - Prompt tests prove the full story history is included on every request.
+- Prompt tests prove the current canonical story includes the selected continuation.
 - Prompt tests prove the selected option is included on next-turn requests.
 
 ### Phase 4: AI Client

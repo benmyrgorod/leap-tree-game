@@ -68,6 +68,7 @@ def build_next_prompt(state: GameState, choice: Choice) -> str:
         setting=state.setup.setting,
         opening=state.setup.opening,
         history=state.full_story_history(),
+        current_story=state.current_story(),
         choice_label=choice.label,
         choice_text=choice.text,
     )

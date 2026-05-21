@@ -1,8 +1,8 @@
 # Requirements
 
-Leap Tree Game is a text-based CLI game in which a player chooses a genre, setting, and story opening. The AI then continues the story and provides two continuation options.
+Leap Tree Game is a text-based CLI game in which a player chooses a genre, setting, and story opening. The AI then presents the unchanged current story and provides two continuation options.
 
-The player selects one option, the AI continues the story again with two new options, and the cycle repeats indefinitely.
+The player selects one option, that option's continuation text is appended to the current story, and the AI provides two new continuation options from the updated story. The cycle repeats indefinitely.
 
 Please see the prompt templates:
 
@@ -14,7 +14,7 @@ Please see the prompt templates:
 - CLI application
 - Allow selecting predefined options or entering a custom “Other” option
 - Use colors and/or bold text for different sections such as:
-  - story continuation
+  - current story
   - player choices
   - prompts/errors
 - The UI should feel clean, spacious, and modern, somewhat similar to Claude Code
@@ -25,10 +25,11 @@ Please see the prompt templates:
 1. The player launches the application
 2. The player selects an AI provider/model and enters API keys
 3. The player fills out CLI forms for the initial prompt
-4. The AI outputs the initial story and generates two continuation options
+4. The AI outputs the selected opening unchanged as the current story and generates two continuation options
 5. The player selects one continuation
-6. The full story history is sent to the AI on every turn
-7. Steps 4–6 repeat continuously until the player exits the application
+6. The selected continuation is appended to the current story
+7. The full story history is sent to the AI on every turn
+8. Steps 4-7 repeat continuously until the player exits the application
 
 ## Technical Requirements
 
@@ -56,17 +57,37 @@ Example:
 
 ```json
 {
-  "story": "Story text",
-  "option_a": "First continuation option",
-  "option_b": "Second continuation option"
+  "story": "Current story so far",
+  "option_a": "First continuation text",
+  "option_b": "Second continuation text"
 }
 ```
 
 The application must validate AI responses before rendering them in the UI.
 
+The `story` field is the canonical story-so-far. On the first turn, it must be exactly the player's selected opening, unchanged. On later turns, it must be the previous canonical story plus the continuation the player selected. The model must not rewrite, summarize, or expand `story` outside the selected continuation path.
+
+The `option_a` and `option_b` fields are not labels such as "Take the sword" or instructions to the player. They are the actual continuation text that could be appended to `story` if selected. For example, after the opening `On a perfectly ordinary impossible day`, the UI should look like:
+
+Each continuation option should be about 5-7 words so choices stay quick to scan.
+
+```text
+On a perfectly ordinary impossible day
+
+A. a brass cloud knocked politely.
+B. the town clock ran backward.
+```
+
+If the player selects `A`, the next turn's canonical story becomes:
+
+```text
+On a perfectly ordinary impossible day a brass cloud knocked politely.
+```
+
 ## Context Handling
 
 - The full story history must always be included in every AI request
+- The current story must always be rebuilt by appending selected continuation options, not by accepting unrelated model rewrites
 - There is no context limit for the MVP
 - Story history should not be summarized
 

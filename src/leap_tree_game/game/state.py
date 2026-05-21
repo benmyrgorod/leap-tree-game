@@ -34,6 +34,12 @@ class Choice(NonEmptyTextModel):
 
 
 class StoryTurn(NonEmptyTextModel):
+    """One branching point in the story.
+
+    `story` is the canonical story before the player picks the next continuation.
+    The selected option text is appended only after the choice is made.
+    """
+
     story: str
     option_a: str
     option_b: str
@@ -68,6 +74,16 @@ class GameState(BaseModel):
         turn.choice = choice
         return choice
 
+    def current_story(self) -> str:
+        """Return the canonical story with selected continuations appended."""
+
+        story = self.setup.opening
+        for turn in self.turns:
+            story = turn.story
+            if turn.choice is not None:
+                story = append_continuation(story, turn.choice.text)
+        return story
+
     def full_story_history(self) -> str:
         """Return the complete story and choice history without summarization."""
 
@@ -75,15 +91,35 @@ class GameState(BaseModel):
             f"Genre: {self.setup.genre}",
             f"Setting: {self.setup.setting}",
             f"Opening: {self.setup.opening}",
+            f"Current story so far: {self.current_story()}",
         ]
 
         for index, turn in enumerate(self.turns, start=1):
-            lines.append(f"Turn {index} story: {turn.story}")
-            lines.append(f"Turn {index} option A: {turn.option_a}")
-            lines.append(f"Turn {index} option B: {turn.option_b}")
+            lines.append(f"Turn {index} story before choice: {turn.story}")
+            lines.append(f"Turn {index} option A continuation: {turn.option_a}")
+            lines.append(f"Turn {index} option B continuation: {turn.option_b}")
             if turn.choice is not None:
+                story_after_choice = append_continuation(turn.story, turn.choice.text)
                 lines.append(
-                    f"Turn {index} selected option {turn.choice.label}: {turn.choice.text}"
+                    f"Turn {index} selected option {turn.choice.label} continuation: {turn.choice.text}"
                 )
+                lines.append(f"Turn {index} story after choice: {story_after_choice}")
 
         return "\n".join(lines)
+
+
+def append_continuation(story: str, continuation: str) -> str:
+    """Append a selected continuation while avoiding obvious duplication."""
+
+    base = story.rstrip()
+    tail = continuation.strip()
+    if not tail:
+        raise ValueError("Continuation must not be empty.")
+
+    if tail.lower().startswith(base.lower()):
+        return tail
+
+    if tail.startswith((",", ".", ";", ":", "!", "?", ")", "]", "}")):
+        return f"{base}{tail}"
+
+    return f"{base} {tail}"

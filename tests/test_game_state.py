@@ -14,23 +14,44 @@ def test_game_state_preserves_complete_history() -> None:
     )
     state.append_response(
         StoryResponse(
-            story="The first whale appeared on the subway platform.",
-            option_a="Question the conductor",
-            option_b="Follow wet footprints",
+            story="Nobody understood why the whales suddenly",
+            option_a="started singing below the platform.",
+            option_b="dragged moonlight through town.",
         )
     )
     state.choose("B")
     state.append_response(
         StoryResponse(
-            story="The footprints ended beside an unplugged payphone.",
-            option_a="Dial the number",
-            option_b="Smash the receiver",
+            story="Nobody understood why the whales suddenly dragged moonlight through town.",
+            option_a="The mayor rang a bell.",
+            option_b="Children followed the glow.",
         )
     )
 
     history = state.full_story_history()
 
     assert "Nobody understood why the whales suddenly" in history
-    assert "The first whale appeared on the subway platform." in history
-    assert "Turn 1 selected option B: Follow wet footprints" in history
-    assert "The footprints ended beside an unplugged payphone." in history
+    assert "Turn 1 story before choice: Nobody understood why the whales suddenly" in history
+    assert "Turn 1 selected option B continuation: dragged moonlight through town." in history
+    assert "Turn 1 story after choice: Nobody understood why the whales suddenly dragged moonlight through town." in history
+    assert "Turn 2 story before choice: Nobody understood why the whales suddenly dragged moonlight through town." in history
+
+
+def test_current_story_appends_selected_continuation() -> None:
+    state = GameState(
+        setup=GameSetup(
+            genre="Fantasy",
+            setting="Middle Ages",
+            opening="On a perfectly ordinary impossible day",
+        )
+    )
+    state.append_response(
+        StoryResponse(
+            story="On a perfectly ordinary impossible day",
+            option_a=", a brass cloud knocked politely.",
+            option_b="the town clock ran backward.",
+        )
+    )
+    state.choose("A")
+
+    assert state.current_story() == "On a perfectly ordinary impossible day, a brass cloud knocked politely."
