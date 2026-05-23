@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 
 class StoryResponse(BaseModel):
@@ -24,6 +24,34 @@ class StoryResponse(BaseModel):
         if not value or not value.strip():
             raise ValueError("must not be empty")
         return value.strip()
+
+
+class OpeningSuggestions(BaseModel):
+    """Validated opening choices returned by the AI provider."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    openings: list[str] = Field(min_length=1)
+
+    @field_validator("openings")
+    @classmethod
+    def reject_blank_openings(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for opening in value:
+            if not isinstance(opening, str):
+                raise ValueError("openings must be strings")
+            stripped = opening.strip()
+            if not stripped:
+                raise ValueError("openings must not contain blank text")
+            normalized = stripped.lower()
+            if normalized in seen:
+                continue
+            cleaned.append(stripped)
+            seen.add(normalized)
+        if not cleaned:
+            raise ValueError("openings must not be empty")
+        return cleaned
 
 
 def parse_story_response(raw: Any) -> StoryResponse:
@@ -53,6 +81,38 @@ def parse_story_response(raw: Any) -> StoryResponse:
             return StoryResponse.model_validate_json(json_text)
 
     return StoryResponse.model_validate(raw)
+
+
+def parse_opening_suggestions(raw: Any) -> OpeningSuggestions:
+    """Parse provider output into opening suggestions."""
+
+    if isinstance(raw, OpeningSuggestions):
+        return raw
+
+    if isinstance(raw, dict):
+        return OpeningSuggestions.model_validate(raw)
+
+    if isinstance(raw, list):
+        return OpeningSuggestions(openings=raw)
+
+    if isinstance(raw, str):
+        text = raw.strip()
+        if not text:
+            raise ValueError("The model returned an empty response.")
+        try:
+            return OpeningSuggestions.model_validate_json(text)
+        except ValidationError:
+            json_text = _extract_first_json_object(text)
+            if json_text is None:
+                raise
+            return OpeningSuggestions.model_validate_json(json_text)
+        except json.JSONDecodeError:
+            json_text = _extract_first_json_object(text)
+            if json_text is None:
+                raise
+            return OpeningSuggestions.model_validate_json(json_text)
+
+    return OpeningSuggestions.model_validate(raw)
 
 
 def _extract_first_json_object(text: str) -> str | None:

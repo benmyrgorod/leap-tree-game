@@ -1,6 +1,6 @@
 # Leap Tree Game
 
-A small Python 3.12+ CLI story game. Pick a genre, setting, and opening. Choose between two AI-generated continuation branches. Repeat. Oh... and it can render ASCII illustrations!
+A small Python 3.12+ CLI story game. Pick a genre and setting, choose from AI-generated openings, then choose between two AI-generated continuation branches.
 
 ## Install
 

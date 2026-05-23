@@ -147,6 +147,24 @@ def build_ascii_art_prompt(
     )
 
 
+def build_openings_prompt(
+    *,
+    genre: str,
+    setting: str,
+    count: int = 10,
+    random_marker: str | None = None,
+) -> str:
+    template = _load_template("openings.md")
+    marker = random_marker or str(random.randrange(100_000, 1_000_000))
+    return _replace_placeholders(
+        template,
+        genre=genre,
+        setting=setting,
+        count=str(count),
+        random_marker=marker,
+    )
+
+
 def _extract_last_sentence(story: str) -> str:
     stripped = story.strip()
     if not stripped:

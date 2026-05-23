@@ -48,10 +48,14 @@ class GameEngine:
 
     def play(self) -> None:
         while True:
-            state = GameState(setup=ask_game_setup(
+            setup = ask_game_setup(
                 console=self.console,
                 provider_summary=self.settings.summary(),
-            ))
+                opening_options_provider=self._generate_opening_options,
+            )
+            if setup is None:
+                return
+            state = GameState(setup=setup)
 
             first_response = self._start_initial_turn(state)
             if first_response is None:
@@ -118,6 +122,12 @@ class GameEngine:
         if response is None:
             return None
         return response
+
+    def _generate_opening_options(self, genre: str, setting: str) -> list[str] | None:
+        return self._generate_with_retry(
+            lambda: self.story_client.generate_openings(genre=genre, setting=setting),
+            status_message="[dim]Generating opening choices...[/dim]",
+        )
 
     def _generate_next_turn_with_retry(
         self,

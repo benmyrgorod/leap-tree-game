@@ -8,6 +8,7 @@ from leap_tree_game.game.prompts import (
     SETTINGS,
     build_initial_prompt,
     build_ascii_art_prompt,
+    build_openings_prompt,
     build_next_prompt,
     sentence_has_ended,
 )
@@ -228,3 +229,19 @@ def test_ascii_prompt_focuses_on_last_sentence() -> None:
         in prompt
     )
     assert "Keep continuity consistent with the full story context." in prompt
+
+
+def test_openings_prompt_includes_genre_setting_randomness_and_json_contract() -> None:
+    prompt = build_openings_prompt(
+        genre="Mystery",
+        setting="Wild West",
+        count=4,
+        random_marker="424242",
+    )
+
+    assert "Selected genre: Mystery" in prompt
+    assert "Selected setting: Wild West" in prompt
+    assert "Randomness marker: 424242" in prompt
+    assert "Generate exactly 4 opening lines." in prompt
+    assert "vivid, surprising, and meaningfully different" in prompt
+    assert '"openings"' in prompt

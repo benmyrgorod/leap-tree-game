@@ -15,6 +15,7 @@ from leap_tree_game.game.prompts import (
     ContinuationShape,
     build_initial_prompt,
     build_ascii_art_prompt,
+    build_openings_prompt,
     build_next_prompt,
 )
 from leap_tree_game.game.state import Choice, GameSetup, GameState
@@ -23,7 +24,12 @@ from leap_tree_game.game.text import (
     ensure_terminal_punctuation,
     strip_terminal_punctuation,
 )
-from leap_tree_game.models.story import StoryResponse, parse_story_response
+from leap_tree_game.models.story import (
+    OpeningSuggestions,
+    StoryResponse,
+    parse_opening_suggestions,
+    parse_story_response,
+)
 
 
 class StoryGenerationError(RuntimeError):
@@ -97,6 +103,21 @@ def create_ascii_agent(settings: ProviderSettings):
     return Agent(model=model)
 
 
+def create_openings_agent(settings: ProviderSettings):
+    """Return a configured Pydantic AI agent for opening suggestions."""
+
+    try:
+        from pydantic_ai import Agent
+    except ImportError as exc:
+        raise StoryGenerationError(
+            "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`.",
+            original=exc,
+        ) from exc
+
+    model = _create_model(settings)
+    return Agent(model=model, output_type=_openings_output_type(settings))
+
+
 def _create_model(settings: ProviderSettings):
     if settings.provider == "openai":
         from pydantic_ai.models.openai import OpenAIChatModel
@@ -129,15 +150,27 @@ def _create_model(settings: ProviderSettings):
 
 
 def _output_type(settings: ProviderSettings):
+    return _structured_output_type(settings, StoryResponse)
+
+
+def _openings_output_type(settings: ProviderSettings):
+    return _structured_output_type(settings, OpeningSuggestions)
+
+
+def _structured_output_type(settings: ProviderSettings, output_model):
     if settings.provider == "ollama" and not settings.uses_ollama_cloud:
         try:
             from pydantic_ai.output import NativeOutput
         except ImportError:
-            return StoryResponse
+            return output_model
 
-        return NativeOutput(StoryResponse)
+        return NativeOutput(output_model)
 
-    return StoryResponse
+    return output_model
+
+
+def _minimum_opening_count(count: int) -> int:
+    return max(1, min(3, count))
 
 
 @dataclass
@@ -145,6 +178,7 @@ class StoryClient:
     settings: ProviderSettings
     agent: RunsSync | None = None
     ascii_agent: RunsSync | None = None
+    openings_agent: RunsSync | None = None
     continuation_shape_picker: Callable[[], ContinuationShape] = field(
         default_factory=BalancedContinuationShapePicker
     )
@@ -249,6 +283,42 @@ class StoryClient:
                 provider=self.settings.provider,
                 model=self.settings.model,
             ) from exc
+
+    def generate_openings(
+        self,
+        *,
+        genre: str,
+        setting: str,
+        count: int = 10,
+    ) -> list[str]:
+        try:
+            raw_output = self._run_sync(
+                build_openings_prompt(
+                    genre=genre,
+                    setting=setting,
+                    count=count,
+                ),
+                output_kind="openings",
+            )
+            openings = parse_opening_suggestions(raw_output).openings
+            openings = openings[:count]
+            if len(openings) < _minimum_opening_count(count):
+                raise ValueError("The model returned too few opening choices.")
+            return openings
+        except StoryGenerationError:
+            raise
+        except (ValidationError, ValueError, TypeError) as exc:
+            raise StoryGenerationError(
+                "The model did not return usable opening choices.",
+                original=exc,
+            ) from exc
+        except Exception as exc:
+            raise _translate_exception(
+                exc,
+                provider=self.settings.provider,
+                model=self.settings.model,
+            ) from exc
+
     @property
     def total_tokens(self) -> int:
         return self.token_usage.total_tokens
@@ -296,13 +366,24 @@ class StoryClient:
     def token_usage_summary(self) -> str:
         return self.token_usage.summary()
 
-    def _run_sync(self, prompt: str, *, output_kind: Literal["story", "ascii"] = "story"):
+    def _run_sync(
+        self,
+        prompt: str,
+        *,
+        output_kind: Literal["story", "ascii", "openings"] = "story",
+    ):
         if output_kind == "ascii":
             if self.agent is not None:
                 agent = self.agent
             else:
                 agent = self.ascii_agent or create_ascii_agent(self.settings)
                 self.ascii_agent = agent
+        elif output_kind == "openings":
+            if self.agent is not None:
+                agent = self.agent
+            else:
+                agent = self.openings_agent or create_openings_agent(self.settings)
+                self.openings_agent = agent
         else:
             agent = self.agent or create_story_agent(self.settings)
 

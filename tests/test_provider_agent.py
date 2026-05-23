@@ -294,6 +294,47 @@ def test_story_client_normalizes_ascii_canvas_to_requested_size() -> None:
     assert lines[3] == "        "
 
 
+def test_story_client_generates_openings_from_genre_and_setting() -> None:
+    agent = FakeAgent(
+        {
+            "openings": [
+                "The sheriff woke inside his own wanted poster.",
+                "A chapel bell rang from under the dust.",
+                "The stagecoach arrived full of mirrors.",
+                "Every cactus pointed toward the same locked grave.",
+            ]
+        }
+    )
+    client = _client(agent)
+
+    openings = client.generate_openings(
+        genre="Mystery",
+        setting="Wild West",
+        count=3,
+    )
+
+    assert openings == [
+        "The sheriff woke inside his own wanted poster.",
+        "A chapel bell rang from under the dust.",
+        "The stagecoach arrived full of mirrors.",
+    ]
+    assert "Selected genre: Mystery" in agent.prompts[-1]
+    assert "Selected setting: Wild West" in agent.prompts[-1]
+    assert "Generate exactly 3 opening lines." in agent.prompts[-1]
+
+
+def test_story_client_rejects_too_few_openings() -> None:
+    agent = FakeAgent({"openings": ["Only one door sang."]})
+    client = _client(agent)
+
+    with pytest.raises(StoryGenerationError):
+        client.generate_openings(
+            genre="Mystery",
+            setting="Wild West",
+            count=3,
+        )
+
+
 def test_story_client_tracks_token_usage_from_model_response() -> None:
     agent = FakeAgent(
         {

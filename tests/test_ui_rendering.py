@@ -5,6 +5,7 @@ from rich.console import Console
 from leap_tree_game.models.story import StoryResponse
 from leap_tree_game.ui.console import render_turn_screen
 from leap_tree_game.ui.forms import render_menu_screen
+from leap_tree_game.ui.screens import _with_other_option
 
 
 def test_turn_screen_renders_frame_story_and_choices() -> None:
@@ -71,3 +72,18 @@ def test_menu_screen_renders_as_framed_question() -> None:
     assert "Mystery" in output
     assert "Other" in output
     assert "setup 1/3" in output
+
+
+def test_opening_options_append_single_other_choice() -> None:
+    assert _with_other_option(
+        [
+            "The sheriff woke inside his own wanted poster.",
+            "Other",
+            "The sheriff woke inside his own wanted poster.",
+            "A chapel bell rang from under the dust.",
+        ]
+    ) == [
+        "The sheriff woke inside his own wanted poster.",
+        "A chapel bell rang from under the dust.",
+        "Other",
+    ]
