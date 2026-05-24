@@ -31,8 +31,6 @@ cd leaptreegame
 python3 -m pip install -r requirements.txt
 ```
 
-Source: [benmyrgorod/leaptreegame](https://github.com/benmyrgorod/leaptreegame)
-
 ## Play
 
 ```bash
