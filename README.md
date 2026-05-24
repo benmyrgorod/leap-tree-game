@@ -75,4 +75,4 @@ To create a release:
 
 1. Update version in `pyproject.toml`
 2. Commit and push
-3. Tag the same version (i.e. `v0.3.1`)
+3. Tag the same version (e.g. `v1.2.3`)
