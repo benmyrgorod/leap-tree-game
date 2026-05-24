@@ -70,3 +70,64 @@ jobs:
           files: dist/*
           name: "Leap Tree Game ${{ github.ref_name }}"
           generate_release_notes: true
+
+      - name: Update Homebrew formula
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          SDIST=$(ls dist/*.tar.gz | head -n 1)
+          if [ -z "${SDIST}" ]; then
+            echo "No sdist archive found in dist/."
+            exit 1
+          fi
+
+          SHA256=$(sha256sum "${SDIST}" | awk '{print $1}')
+          DIST_FILENAME="$(basename "${SDIST}")"
+          RELEASE_URL="https://github.com/${REPO}/releases/download/${TAG_NAME}/${DIST_FILENAME}"
+          FORMULA_TMP="$(mktemp)"
+
+          python - "$RELEASE_URL" "$SHA256" "$FORMULA_TMP" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          url, sha, output_path = sys.argv[1], sys.argv[2], Path(sys.argv[3])
+          text = Path("Formula/leaptreegame.rb").read_text(encoding="utf-8")
+
+          new_text = re.sub(
+              r'^(\s*url\s+)"[^"]+"$',
+              rf'\1"{url}"',
+              text,
+              count=1,
+              flags=re.M,
+          )
+          new_text = re.sub(
+              r'^(\s*sha256\s+)"[^"]+"$',
+              rf'\1"{sha}"',
+              new_text,
+              count=1,
+              flags=re.M,
+          )
+          if new_text == text:
+              raise SystemExit("No formula URL/SHA fields were updated")
+          output_path.write_text(new_text, encoding="utf-8")
+          PY
+          if [ -z "${FORMULA_TMP}" ]; then
+            echo "Failed to allocate temporary formula path."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${{ github.event.repository.default_branch }}"
+          git switch "${{ github.event.repository.default_branch }}"
+          mv "${FORMULA_TMP}" Formula/leaptreegame.rb
+          git add Formula/leaptreegame.rb
+          if git diff --cached --quiet; then
+            echo "Formula already up-to-date."
+            exit 0
+          fi
+
+          git commit -m "Update Homebrew formula for ${TAG_NAME}"
+          git push origin "${{ github.event.repository.default_branch }}"
