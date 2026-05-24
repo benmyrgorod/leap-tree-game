@@ -7,9 +7,13 @@ from pathlib import Path
 from typing import Any
 
 import tomllib
-from packaging.version import Version
 
-FALLBACK_VERSION = "0.2.0"
+try:
+    from packaging.version import Version
+except ModuleNotFoundError:  # pragma: no cover - allows startup on older installs.
+    Version = None
+
+FALLBACK_VERSION = "*"
 
 
 def _resolve_repo_root() -> Path:
@@ -34,7 +38,12 @@ def _read_pyproject_version() -> str | None:
     return None
 
 
-RELEASE_VERSION = Version(_read_pyproject_version() or FALLBACK_VERSION)
+_raw_version = _read_pyproject_version() or FALLBACK_VERSION
+if Version is None:
+    RELEASE_VERSION = _raw_version
+else:
+    RELEASE_VERSION = Version(_raw_version)
+
 BASE_VERSION = str(RELEASE_VERSION)
 VERSION = BASE_VERSION
 VERSION_INFO = RELEASE_VERSION
