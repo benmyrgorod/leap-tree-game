@@ -5,15 +5,18 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 from typing import Any
+from importlib.metadata import PackageNotFoundError, version as dist_version
 
 import tomllib
 
 try:
     from packaging.version import Version
+    from packaging.version import InvalidVersion
 except ModuleNotFoundError:  # pragma: no cover - allows startup on older installs.
     Version = None
+    InvalidVersion = None
 
-FALLBACK_VERSION = "*"
+FALLBACK_VERSION = "0.0.0"
 
 
 def _resolve_repo_root() -> Path:
@@ -38,11 +41,31 @@ def _read_pyproject_version() -> str | None:
     return None
 
 
-_raw_version = _read_pyproject_version() or FALLBACK_VERSION
+def _normalize_version(value: str | None) -> str | None:
+    if not value:
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _read_distribution_version() -> str | None:
+    try:
+        dist = dist_version("leaptreegame")
+    except PackageNotFoundError:
+        return None
+
+    return _normalize_version(dist)
+
+
+_raw_version = _read_pyproject_version() or _read_distribution_version() or FALLBACK_VERSION
+
 if Version is None:
     RELEASE_VERSION = _raw_version
 else:
-    RELEASE_VERSION = Version(_raw_version)
+    try:
+        RELEASE_VERSION = Version(_raw_version)
+    except InvalidVersion:
+        RELEASE_VERSION = Version(FALLBACK_VERSION)
 
 BASE_VERSION = str(RELEASE_VERSION)
 VERSION = BASE_VERSION
