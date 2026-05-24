@@ -5,6 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "leaptreegame"
 version = "0.2.3"
+dependencies = [
+  "packaging>=24.0",
+  "pydantic>=2.7",
+  "pydantic-ai>=1.0.0",
+  "python-dotenv>=1.0",
+  "rich>=13.7",
+  "typer>=0.12",
+]
 
 [project.scripts]
 leaptreegame = "leap_tree_game.app:main"
