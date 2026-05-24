@@ -2,10 +2,22 @@ from __future__ import annotations
 
 from rich.console import Console
 
+from leap_tree_game import __version__
 from leap_tree_game.models.story import StoryResponse
-from leap_tree_game.ui.console import render_turn_screen
+from leap_tree_game.ui.console import render_title, render_turn_screen
 from leap_tree_game.ui.forms import render_menu_screen
 from leap_tree_game.ui.screens import _with_other_option
+
+
+def test_render_title_includes_version() -> None:
+    console = Console(record=True, force_terminal=False, width=80)
+
+    render_title(active_console=console, version=__version__)
+
+    output = console.export_text()
+
+    assert "Leap Tree Game" in output
+    assert __version__ in output
 
 
 def test_turn_screen_renders_frame_story_and_choices() -> None:

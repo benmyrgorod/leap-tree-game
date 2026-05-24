@@ -4,17 +4,40 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import Any
 
+import tomllib
 from packaging.version import Version
 
-RELEASE_VERSION = Version("0.1.0")
-BASE_VERSION = str(RELEASE_VERSION)
-VERSION = BASE_VERSION
-VERSION_INFO = RELEASE_VERSION
+FALLBACK_VERSION = "0.2.0"
 
 
 def _resolve_repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
+
+def _read_pyproject_version() -> str | None:
+    pyproject_path = _resolve_repo_root() / "pyproject.toml"
+    if not pyproject_path.exists():
+        return None
+
+    try:
+        with pyproject_path.open("rb") as handle:
+            data: dict[str, Any] = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    version = data.get("project", {}).get("version") if isinstance(data, dict) else None
+    if isinstance(version, str):
+        return version.strip() or None
+    if version is not None:
+        return str(version).strip() or None
+    return None
+
+
+RELEASE_VERSION = Version(_read_pyproject_version() or FALLBACK_VERSION)
+BASE_VERSION = str(RELEASE_VERSION)
+VERSION = BASE_VERSION
+VERSION_INFO = RELEASE_VERSION
 
 
 def _git_version() -> str | None:

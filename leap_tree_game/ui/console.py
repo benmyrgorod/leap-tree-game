@@ -9,6 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from leap_tree_game import __version__
 from leap_tree_game.models.story import StoryResponse
 from leap_tree_game.i18n import t
 
@@ -81,10 +82,17 @@ def render_turn_screen(
 
 
 def build_screen_frame(title: str, *renderables, subtitle: str | None = None) -> Panel:
+    version = f"v{__version__}"
+    if subtitle is None or not str(subtitle).strip():
+        framed_subtitle = version
+    elif version in subtitle:
+        framed_subtitle = subtitle
+    else:
+        framed_subtitle = f"{subtitle} | {version}"
     return Panel(
         Group(*renderables),
         title=f"[bold cyan]{title}[/bold cyan]",
-        subtitle=subtitle,
+        subtitle=framed_subtitle,
         border_style=FRAME_STYLE,
         box=box.ROUNDED,
         padding=(1, 2),
@@ -104,11 +112,14 @@ def render_success(message: str, *, active_console: Console = console) -> None:
     active_console.print(f"[green]{message}[/green]")
 
 
-def render_title(active_console: Console = console) -> None:
+def render_title(*, active_console: Console = console, version: str | None = None) -> None:
+    # `version` is intentionally kept for compatibility with existing call sites.
+    _ = version
     title = Text("Leap Tree Game", style="bold cyan")
+    subtitle = "branching AI stories"
     render_framed_screen(
         "Leap Tree Game",
         title,
         active_console=active_console,
-        subtitle="branching AI stories",
+        subtitle=subtitle,
     )

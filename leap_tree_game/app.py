@@ -55,7 +55,7 @@ def play() -> None:
     """Start the normal play flow."""
 
     _ensure_runtime_dependencies()
-    render_title(console)
+    render_title(active_console=console, version=__version__)
     settings = _load_or_setup()
     _verify_llm_connection(settings)
     GameEngine(settings, console=console).play()
