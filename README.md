@@ -4,6 +4,29 @@ A small Python 3.12+ CLI story game. Pick a genre and setting, choose from AI-ge
 
 ## Install
 
+### From PyPI
+
+```bash
+python3 -m pip install leaptreegame
+```
+
+Then run:
+
+```bash
+leaptreegame --help
+```
+
+### From Homebrew
+
+```bash
+brew tap benmyrgorod/leaptreegame
+brew install leaptreegame
+```
+
+Source: [benmyrgorod/homebrew-leaptreegame](https://github.com/benmyrgorod/homebrew-leaptreegame)
+
+If you want to run from source instead of a package install:
+
 ```bash
 python3 -m pip install -r requirements.txt
 ```
@@ -27,16 +50,22 @@ Local Ollama does not require an API key when using `http://localhost:11434/v1`.
 ## Play
 
 ```bash
+leaptreegame
+```
+
+or from source:
+
+```bash
 python -m leap_tree_game.app
 ```
 
 Useful commands:
 
 ```bash
-python -m leap_tree_game.app --help
-python -m leap_tree_game.app doctor
-python -m leap_tree_game.app setup
-python -m leap_tree_game.app play
+leaptreegame --help
+leaptreegame doctor
+leaptreegame setup
+leaptreegame play
 ```
 
 ## Test
