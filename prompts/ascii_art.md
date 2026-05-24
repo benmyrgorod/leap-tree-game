@@ -3,6 +3,8 @@ Create a compact monochrome ASCII illustration of this scene.
 Current story context:
 {story_context}
 
+Keep scene language consistency with {language} descriptions.
+
 Genre: {genre}
 Setting: {setting}
 

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "AI 분기형 이야기"
+  },
+  "language": {
+    "code": "ko",
+    "name": "Korean",
+    "prompt_name": "Korean",
+    "menu_label": "한국어"
+  },
+  "setup": {
+    "language_title": "언어",
+    "genre_title": "장르",
+    "setting_title": "배경",
+    "opening_title": "오프닝",
+    "step": "설정 {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "영웅이 되는 길",
+      "선정된 자",
+      "모험 또는 퀘스트",
+      "복수 이야기",
+      "코미디",
+      "비극",
+      "사랑",
+      "미스터리",
+      "기타"
+    ],
+    "settings": [
+      "선사시대",
+      "성서적 낙원",
+      "고대 문명",
+      "고전 고대 (이스라엘/그리스/로마)",
+      "중세",
+      "해적과 탐험의 시대",
+      "와일드 웨스트",
+      "현대",
+      "포스트 아포칼립스",
+      "공상 과학 낙원",
+      "판타지",
+      "슈퍼히어로",
+      "기타"
+    ]
+  },
+  "forms": {
+    "select_option": "번호 또는 이름으로 옵션을 선택하세요.",
+    "custom_value_prompt": "{field}에 대한 사용자 입력값을 입력하세요.",
+    "selection_error": "목록에서 옵션을 선택해 주세요.",
+    "custom_value_error": "{other_label}에는 사용자 값이 필요합니다.",
+    "other_label": "기타",
+    "choice_prompt": "선택",
+    "number_header": "번호",
+    "option_header": "옵션"
+  },
+  "turn": {
+    "current_story": "현재 이야기",
+    "command_help": "선택: a(첫 번째), b(두 번째), g(재생성), r(재시작), q(종료)",
+    "command_prompt": "선택",
+    "goodbye": "안녕히 가세요.",
+    "restart": "스토리를 다시 시작합니다.",
+    "retry_prompt": "다시 시도할까요?"
+  },
+  "status": {
+    "turn": "차례 {turn_number} | {provider_summary} | 사용 토큰: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "생성된 모든 텍스트를 {language}로 작성하세요.",
+    "openings_language_instruction": "모든 오프닝 문장을 {language}로 작성하세요."
+  },
+  "layout": {
+    "command_help": "선택: a(첫 번째), b(두 번째), g(재생성), r(재시작), q(종료)"
+  },
+  "engine": {
+    "asking": "스토리 엔진에 요청 중...",
+    "generating_openings": "오프닝 선택지를 생성 중...",
+    "generating_ascii": "ASCII 장면을 생성 중..."
+  },
+  "story": {
+    "verify": "공급자 연결 확인 중..."
+  }
+}

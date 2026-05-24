@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "AI 分支故事"
+  },
+  "language": {
+    "code": "zh",
+    "name": "Chinese",
+    "prompt_name": "Chinese",
+    "menu_label": "中文"
+  },
+  "setup": {
+    "language_title": "语言",
+    "genre_title": "类型",
+    "setting_title": "背景",
+    "opening_title": "开头",
+    "step": "设置 {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "从零到英雄",
+      "被选中的人",
+      "冒险或任务",
+      "复仇故事",
+      "喜剧",
+      "悲剧",
+      "爱情",
+      "神秘",
+      "其他"
+    ],
+    "settings": [
+      "史前",
+      "圣经伊甸园",
+      "古代文明",
+      "古典古代（以色列/希腊/罗马）",
+      "中世纪",
+      "海盗与探索时代",
+      "狂野西部",
+      "现代",
+      "后末日",
+      "科幻乐园",
+      "奇幻",
+      "超级英雄",
+      "其他"
+    ]
+  },
+  "forms": {
+    "select_option": "请按编号或名称选择一个选项。",
+    "custom_value_prompt": "请输入 {field} 的自定义值。",
+    "selection_error": "请从列出的选项中选择。",
+    "custom_value_error": "{other_label} 需要自定义值。",
+    "other_label": "其他",
+    "choice_prompt": "选择",
+    "number_header": "编号",
+    "option_header": "选项"
+  },
+  "turn": {
+    "current_story": "当前故事",
+    "command_help": "选择: a (第一个选项), b (第二个选项), g (重新生成), r (重启), q (退出)",
+    "command_prompt": "选择",
+    "goodbye": "再见。",
+    "restart": "正在重新开始故事。",
+    "retry_prompt": "重试？"
+  },
+  "status": {
+    "turn": "回合 {turn_number} | {provider_summary} | 使用 token: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "请使用 {language} 撰写所有生成文本。",
+    "openings_language_instruction": "请使用 {language} 撰写所有开场句。"
+  },
+  "layout": {
+    "command_help": "选择: a (第一个选项), b (第二个选项), g (重新生成), r (重启), q (退出)"
+  },
+  "engine": {
+    "asking": "正在询问故事引擎...",
+    "generating_openings": "生成开场选项中...",
+    "generating_ascii": "生成 ASCII 场景中..."
+  },
+  "story": {
+    "verify": "正在验证提供者连接..."
+  }
+}

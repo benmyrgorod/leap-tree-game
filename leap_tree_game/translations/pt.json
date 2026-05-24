@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "histórias ramificadas com IA"
+  },
+  "language": {
+    "code": "pt",
+    "name": "Portuguese",
+    "prompt_name": "Portuguese",
+    "menu_label": "Português"
+  },
+  "setup": {
+    "language_title": "Idioma",
+    "genre_title": "Gênero",
+    "setting_title": "Cenário",
+    "opening_title": "Abertura",
+    "step": "configuração {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "De zero a herói",
+      "O escolhido",
+      "Aventura ou missão",
+      "História de vingança",
+      "Comédia",
+      "Tragédia",
+      "Amor",
+      "Mistério",
+      "Outro"
+    ],
+    "settings": [
+      "Pré-história",
+      "Paraíso bíblico",
+      "Civilizações antigas",
+      "Antiguidade clássica (Israel/Grécia/Roma)",
+      "Idade Média",
+      "Era dos piratas e da exploração",
+      "Velho Oeste",
+      "Dia moderno",
+      "Pós-apocalíptico",
+      "Paraíso de ficção científica",
+      "Fantasia",
+      "Super-heróis",
+      "Outro"
+    ]
+  },
+  "forms": {
+    "select_option": "Escolha uma opção por número ou nome.",
+    "custom_value_prompt": "Digite um valor personalizado para {field}.",
+    "selection_error": "Escolha uma das opções listadas.",
+    "custom_value_error": "É necessário um valor personalizado para {other_label}.",
+    "other_label": "Outro",
+    "choice_prompt": "Escolher",
+    "number_header": "Número",
+    "option_header": "Opção"
+  },
+  "turn": {
+    "current_story": "História atual",
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), g (regenerar), r (reiniciar), q (sair)",
+    "command_prompt": "Escolher",
+    "goodbye": "Até logo.",
+    "restart": "Reiniciando história.",
+    "retry_prompt": "Tentar novamente?"
+  },
+  "status": {
+    "turn": "turno {turn_number} | {provider_summary} | tokens usados: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "Escreva todo o texto gerado em {language}.",
+    "openings_language_instruction": "Escreva todas as linhas de abertura em {language}."
+  },
+  "layout": {
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), g (regenerar), r (reiniciar), q (sair)"
+  },
+  "engine": {
+    "asking": "Perguntando ao mecanismo da história...",
+   "generating_openings": "Gerando opções iniciais...",
+    "generating_ascii": "Gerando cena ASCII..."
+  },
+  "story": {
+    "verify": "Verificando conexão do provedor..."
+  }
+}

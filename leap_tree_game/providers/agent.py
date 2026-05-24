@@ -191,6 +191,7 @@ class StoryClient:
         *,
         avoid_continuations: tuple[str, str] | None = None,
         continuation_shape: ContinuationShape | None = None,
+        language: str | None = None,
     ) -> StoryResponse:
         continuation_shape = (
             continuation_shape or self.continuation_shape_picker()
@@ -201,6 +202,7 @@ class StoryClient:
                 setup,
                 continuation_shape=continuation_shape,
                 avoid_continuations=avoid_continuations,
+                language=language,
             )
         )
         return _with_canonical_story(response, setup.opening, continuation_shape)
@@ -212,6 +214,7 @@ class StoryClient:
         *,
         avoid_continuations: tuple[str, str] | None = None,
         continuation_shape: ContinuationShape | None = None,
+        language: str | None = None,
     ) -> StoryResponse:
         continuation_shape = (
             continuation_shape or self.continuation_shape_picker()
@@ -223,6 +226,7 @@ class StoryClient:
                 choice,
                 continuation_shape=continuation_shape,
                 avoid_continuations=avoid_continuations,
+                language=language,
             )
         )
         return _with_canonical_story(response, state.current_story(), continuation_shape)
@@ -251,6 +255,7 @@ class StoryClient:
         *,
         genre: str | None = None,
         setting: str | None = None,
+        language: str | None = None,
         width: int | None = None,
         height: int | None = None,
     ) -> str:
@@ -260,6 +265,7 @@ class StoryClient:
                     story,
                     genre=genre,
                     setting=setting,
+                    language=language,
                     width=width,
                     height=height,
                 ),
@@ -290,6 +296,7 @@ class StoryClient:
         genre: str,
         setting: str,
         count: int = 10,
+        language: str | None = None,
     ) -> list[str]:
         try:
             raw_output = self._run_sync(
@@ -297,6 +304,7 @@ class StoryClient:
                     genre=genre,
                     setting=setting,
                     count=count,
+                    language=language,
                 ),
                 output_kind="openings",
             )

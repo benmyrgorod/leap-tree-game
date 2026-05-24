@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "KI-Branching-Geschichten"
+  },
+  "language": {
+    "code": "de",
+    "name": "German",
+    "prompt_name": "German",
+    "menu_label": "Deutsch"
+  },
+  "setup": {
+    "language_title": "Sprache",
+    "genre_title": "Genre",
+    "setting_title": "Setting",
+    "opening_title": "Einstieg",
+    "step": "Einrichtung {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "Vom Nichts zum Helden",
+      "Der Auserwählte",
+      "Abenteuer oder Quest",
+      "Rachegeschichte",
+      "Komödie",
+      "Tragödie",
+      "Liebe",
+      "Geheimnis",
+      "Anderes"
+    ],
+    "settings": [
+      "Prähistorische Zeit",
+      "Biblisches Paradies",
+      "Antike Zivilisationen",
+      "Klassische Antike (Israel/Griechenland/Rom)",
+      "Mittelalter",
+      "Zeitalter der Piraten und Erkundung",
+      "Wilder Westen",
+      "Moderne",
+      "Postapokalyptisch",
+      "Sci-Fi-Paradies",
+      "Fantasy",
+      "Superhelden",
+      "Anderes"
+    ]
+  },
+  "forms": {
+    "select_option": "Wähle eine Option nach Nummer oder Name.",
+    "custom_value_prompt": "Gib einen eigenen Wert für {field} ein.",
+    "selection_error": "Wähle bitte eine der aufgelisteten Optionen.",
+    "custom_value_error": "Ein eigener Wert ist für {other_label} erforderlich.",
+    "other_label": "Andere",
+    "choice_prompt": "Auswählen",
+    "number_header": "Nummer",
+    "option_header": "Option"
+  },
+  "turn": {
+    "current_story": "Aktuelle Geschichte",
+    "command_help": "Auswählen: a (erste Option), b (zweite Option), g (neu generieren), r (neu starten), q (beenden)",
+    "command_prompt": "Auswählen",
+    "goodbye": "Auf Wiedersehen.",
+    "restart": "Geschichte wird neu gestartet.",
+    "retry_prompt": "Erneut versuchen?"
+  },
+  "status": {
+    "turn": "runde {turn_number} | {provider_summary} | verwendete Tokens: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "Schreibe den gesamten generierten Text auf {language}.",
+    "openings_language_instruction": "Schreibe alle Eröffnungszeilen auf {language}."
+  },
+  "layout": {
+    "command_help": "Auswählen: a (erste Option), b (zweite Option), g (neu generieren), r (neu starten), q (beenden)"
+  },
+  "engine": {
+    "asking": "Frage die Story-Engine...",
+    "generating_openings": "Öffnungsmöglichkeiten werden erstellt...",
+    "generating_ascii": "ASCII-Szene wird erstellt..."
+  },
+  "story": {
+    "verify": "Anbieterverbindung wird überprüft..."
+  }
+}

@@ -10,6 +10,7 @@ from typing import Literal
 
 from leap_tree_game.game.state import Choice, GameSetup, GameState
 from leap_tree_game.game.text import sentence_has_ended
+from leap_tree_game.i18n import language_display_name, normalize_language
 
 ContinuationShape = Literal["continue_sentence", "end_sentence"]
 ContinuationStart = Literal["start_new_sentence", "continue_previous_sentence"]
@@ -83,13 +84,16 @@ def build_initial_prompt(
     *,
     continuation_shape: ContinuationShape | None = None,
     avoid_continuations: tuple[str, str] | None = None,
+    language: str | None = None,
 ) -> str:
     template = _load_template("initial.md")
+    language_code = normalize_language(language or setup.language)
     return _replace_placeholders(
         template,
         genre=setup.genre,
         setting=setup.setting,
         opening=setup.opening,
+        language=language_display_name(language_code),
         continuation_start_instruction=_continuation_start_instruction(setup.opening),
         continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
         regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
@@ -104,9 +108,11 @@ def build_next_prompt(
     *,
     continuation_shape: ContinuationShape | None = None,
     avoid_continuations: tuple[str, str] | None = None,
+    language: str | None = None,
 ) -> str:
     template = _load_template("next.md")
     current_story = state.current_story()
+    language_code = normalize_language(language or state.setup.language)
     return _replace_placeholders(
         template,
         genre=state.setup.genre,
@@ -116,6 +122,7 @@ def build_next_prompt(
         current_story=current_story,
         choice_label=choice.label,
         choice_text=choice.text,
+        language=language_display_name(language_code),
         continuation_start_instruction=_continuation_start_instruction(current_story),
         continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
         regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
@@ -129,6 +136,7 @@ def build_ascii_art_prompt(
     *,
     genre: str | None = None,
     setting: str | None = None,
+    language: str | None = None,
     width: int | None = None,
     height: int | None = None,
 ) -> str:
@@ -136,12 +144,14 @@ def build_ascii_art_prompt(
     target_width = str(width or 80)
     target_height = str(height or 12)
     focus_sentence = _extract_last_sentence(story)
+    language_code = normalize_language(language or "en")
     return _replace_placeholders(
         template,
         genre=genre or "a timeless adventure",
         setting=setting or "an open setting",
         story_context=story,
         focus_sentence=focus_sentence,
+        language=language_display_name(language_code),
         width=target_width,
         height=target_height,
     )
@@ -152,15 +162,18 @@ def build_openings_prompt(
     genre: str,
     setting: str,
     count: int = 10,
+    language: str | None = None,
     random_marker: str | None = None,
 ) -> str:
     template = _load_template("openings.md")
+    language_code = normalize_language(language)
     marker = random_marker or str(random.randrange(100_000, 1_000_000))
     return _replace_placeholders(
         template,
         genre=genre,
         setting=setting,
         count=str(count),
+        language=language_display_name(language_code),
         random_marker=marker,
     )
 

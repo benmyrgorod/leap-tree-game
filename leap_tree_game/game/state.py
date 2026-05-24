@@ -28,6 +28,7 @@ class GameSetup(NonEmptyTextModel):
     genre: str
     setting: str
     opening: str
+    language: str = "en"
 
 
 class Choice(NonEmptyTextModel):

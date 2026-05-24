@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "AIで分岐する物語"
+  },
+  "language": {
+    "code": "ja",
+    "name": "Japanese",
+    "prompt_name": "Japanese",
+    "menu_label": "日本語"
+  },
+  "setup": {
+    "language_title": "言語",
+    "genre_title": "ジャンル",
+    "setting_title": "舞台",
+    "opening_title": "導入",
+    "step": "セットアップ {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "ゼロからヒーローへ",
+      "選ばれし者",
+      "冒険やクエスト",
+      "復讐の物語",
+      "コメディ",
+      "悲劇",
+      "愛",
+      "ミステリー",
+      "その他"
+    ],
+    "settings": [
+      "先史時代",
+      "聖書の楽園",
+      "古代文明",
+      "古代古典（イスラエル/ギリシャ/ローマ）",
+      "中世",
+      "海賊と探検の時代",
+      "ワイルド・ウエスト",
+      "現代",
+      "ポストアポカリプス",
+      "SFの楽園",
+      "ファンタジー",
+      "スーパーヒーロー",
+      "その他"
+    ]
+  },
+  "forms": {
+    "select_option": "番号または名前で選択してください。",
+    "custom_value_prompt": "{field} のカスタム値を入力してください。",
+    "selection_error": "表示された選択肢から選んでください。",
+    "custom_value_error": "{other_label} にはカスタム値が必要です。",
+    "other_label": "その他",
+    "choice_prompt": "選択",
+    "number_header": "番号",
+    "option_header": "選択肢"
+  },
+  "turn": {
+    "current_story": "現在のストーリー",
+    "command_help": "選択: a (最初の選択), b (2番目の選択), g (再生成), r (再開), q (終了)",
+    "command_prompt": "選択",
+    "goodbye": "さようなら。",
+    "restart": "ストーリーを再開しています。",
+    "retry_prompt": "再試行しますか？"
+  },
+  "status": {
+    "turn": "ターン {turn_number} | {provider_summary} | 使用トークン: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "生成される物語テキストはすべて {language} で書いてください。",
+    "openings_language_instruction": "導入文はすべて {language} で書いてください。"
+  },
+  "layout": {
+    "command_help": "選択: a (最初の選択), b (2番目の選択), g (再生成), r (再開), q (終了)"
+  },
+  "engine": {
+    "asking": "物語エンジンに問い合わせ中...",
+    "generating_openings": "導入文を生成中...",
+    "generating_ascii": "ASCIIシーンを生成中..."
+  },
+  "story": {
+    "verify": "プロバイダー接続を確認中..."
+  }
+}

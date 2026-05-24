@@ -2,6 +2,7 @@ You are creating opening choices for an interactive branching story.
 
 Selected genre: {genre}
 Selected setting: {setting}
+Write all opening lines in {language}.
 Randomness marker: {random_marker}
 Use the randomness marker as an entropy cue; do not interpret it literally.
 

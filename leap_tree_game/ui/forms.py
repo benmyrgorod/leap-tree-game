@@ -8,9 +8,7 @@ from rich.table import Table
 from rich.text import Text
 
 from leap_tree_game.ui.console import render_framed_screen
-
-APP_FRAME_TITLE = "Leap Tree Game"
-OTHER_LABEL = "Other"
+from leap_tree_game.i18n import t
 
 
 def resolve_menu_choice(
@@ -18,12 +16,14 @@ def resolve_menu_choice(
     options: list[str],
     *,
     custom_value: str | None = None,
+    other_label: str = "Other",
+    language: str = "en",
 ) -> str:
     """Resolve a numbered or label-based selection to its final value."""
 
     normalized = selection.strip()
     if not normalized:
-        raise ValueError("Please choose one of the listed options.")
+        raise ValueError(t(language, "forms.selection_error"))
 
     selected: str | None = None
     if normalized.isdigit():
@@ -37,11 +37,13 @@ def resolve_menu_choice(
         )
 
     if selected is None:
-        raise ValueError("Please choose one of the listed options.")
+        raise ValueError(t(language, "forms.selection_error"))
 
-    if selected == OTHER_LABEL:
+    if selected == other_label:
         if custom_value is None or not custom_value.strip():
-            raise ValueError("Custom value is required for Other.")
+            raise ValueError(
+                t(language, "forms.custom_value_error", other_label=other_label)
+            )
         return custom_value.strip()
 
     return selected
@@ -53,13 +55,30 @@ def ask_menu_choice(
     *,
     console: Console,
     subtitle: str | None = None,
+    language: str = "en",
+    other_label: str | None = None,
 ) -> str:
+    resolved_other_label = other_label or t(language, "forms.other_label")
     error: str | None = None
     while True:
-        render_menu_screen(title, options, console=console, subtitle=subtitle, error=error)
+        render_menu_screen(
+            title,
+            options,
+            console=console,
+            subtitle=subtitle,
+            error=error,
+            language=language,
+            other_label=resolved_other_label,
+        )
         raw = Prompt.ask(title, console=console)
         try:
-            selected = resolve_menu_choice(raw, options, custom_value="__placeholder__")
+            selected = resolve_menu_choice(
+                raw,
+                options,
+                custom_value="__placeholder__",
+                other_label=resolved_other_label,
+                language=language,
+            )
         except ValueError as exc:
             error = str(exc)
             continue
@@ -67,10 +86,25 @@ def ask_menu_choice(
         if selected == "__placeholder__":
             custom_error: str | None = None
             while True:
-                render_custom_value_screen(title, console=console, subtitle=subtitle, error=custom_error)
-                custom = Prompt.ask("Other", console=console)
+                render_custom_value_screen(
+                    title,
+                    console=console,
+                    subtitle=subtitle,
+                    error=custom_error,
+                    language=language,
+                )
+                custom = Prompt.ask(
+                    resolved_other_label,
+                    console=console,
+                )
                 try:
-                    return resolve_menu_choice(raw, options, custom_value=custom)
+                    return resolve_menu_choice(
+                        raw,
+                        options,
+                        custom_value=custom,
+                        language=language,
+                        other_label=resolved_other_label,
+                    )
                 except ValueError as exc:
                     custom_error = str(exc)
                     continue
@@ -78,9 +112,13 @@ def ask_menu_choice(
         return selected
 
 
-def ask_choice_command(*, console: Console) -> str:
+def ask_choice_command(
+    *,
+    console: Console,
+    language: str = "en",
+) -> str:
     return Prompt.ask(
-        "Choose",
+        t(language, "forms.choice_prompt"),
         choices=["a", "b", "g", "r", "q"],
         default="a",
         show_choices=True,
@@ -94,18 +132,32 @@ def render_menu_screen(
     *,
     console: Console,
     subtitle: str | None = None,
+    language: str = "en",
     error: str | None = None,
+    other_label: str | None = None,
 ) -> None:
     renderables = [
         Text(title, style="bold"),
         Text(""),
-        Text("Select an option by number or name.", style="dim"),
+        Text(
+            t(language, "forms.select_option"),
+            style="dim",
+        ),
         Text(""),
-        build_menu_table(title, options),
+        build_menu_table(
+            options,
+            language=language,
+            other_label=other_label,
+        ),
     ]
     if error:
         renderables.append(Text(error, style="yellow"))
-    render_framed_screen(APP_FRAME_TITLE, *renderables, active_console=console, subtitle=subtitle)
+    render_framed_screen(
+        t(language, "app.title"),
+        *renderables,
+        active_console=console,
+        subtitle=subtitle,
+    )
 
 
 def render_custom_value_screen(
@@ -113,20 +165,37 @@ def render_custom_value_screen(
     *,
     console: Console,
     subtitle: str | None = None,
+    language: str = "en",
     error: str | None = None,
 ) -> None:
     renderables = [
-        Text(f"Enter a custom value for {title}.", style="dim"),
+        Text(
+            t(language, "forms.custom_value_prompt", field=title),
+            style="dim",
+        ),
     ]
     if error:
         renderables.append(Text(error, style="yellow"))
-    render_framed_screen(APP_FRAME_TITLE, *renderables, active_console=console, subtitle=subtitle)
+    render_framed_screen(
+        t(language, "app.title"),
+        *renderables,
+        active_console=console,
+        subtitle=subtitle,
+    )
 
 
-def build_menu_table(title: str, options: list[str]) -> Table:
+def build_menu_table(
+    options: list[str],
+    *,
+    language: str = "en",
+    other_label: str | None = None,
+) -> Table:
     table = Table(show_header=False, box=None, padding=(0, 1))
-    table.add_column("Number", justify="right", style="dim", no_wrap=True)
-    table.add_column("Option", style="white")
+    table.add_column(t(language, "forms.number_header"), justify="right", style="dim", no_wrap=True)
+    table.add_column(t(language, "forms.option_header"), style="white")
     for index, option in enumerate(options, start=1):
-        table.add_row(str(index), option)
+        translated_option = option
+        if other_label and option == other_label:
+            translated_option = t(language, "forms.other_label")
+        table.add_row(str(index), translated_option)
     return table

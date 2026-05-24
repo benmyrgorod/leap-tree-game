@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "histoires interactives par IA"
+  },
+  "language": {
+    "code": "fr",
+    "name": "French",
+    "prompt_name": "French",
+    "menu_label": "Français"
+  },
+  "setup": {
+    "language_title": "Langue",
+    "genre_title": "Genre",
+    "setting_title": "Cadre",
+    "opening_title": "Ouverture",
+    "step": "configuration {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "De zéro à héros",
+      "Le choisi",
+      "Aventure ou quête",
+      "Histoire de vengeance",
+      "Comédie",
+      "Tragédie",
+      "Amour",
+      "Mystère",
+      "Autre"
+    ],
+    "settings": [
+      "Préhistoire",
+      "Paradis biblique",
+      "Civilisations anciennes",
+      "Antiquité classique (Israël/Grèce/Rome)",
+      "Moyen Âge",
+      "Âge des pirates et des explorateurs",
+      "Far West",
+      "Temps modernes",
+      "Post-apocalyptique",
+      "Paradis de science-fiction",
+      "Fantasy",
+      "Super-héros",
+      "Autre"
+    ]
+  },
+  "forms": {
+    "select_option": "Choisissez une option par numéro ou nom.",
+    "custom_value_prompt": "Saisissez une valeur personnalisée pour {field}.",
+    "selection_error": "Veuillez choisir une option listée.",
+    "custom_value_error": "Une valeur personnalisée est requise pour {other_label}.",
+    "other_label": "Autre",
+    "choice_prompt": "Choisir",
+    "number_header": "Numéro",
+    "option_header": "Option"
+  },
+  "turn": {
+    "current_story": "Histoire actuelle",
+    "command_help": "Choisir : a (première option), b (deuxième option), g (régénérer), r (redémarrer), q (quitter)",
+    "command_prompt": "Choisir",
+    "goodbye": "Au revoir.",
+    "restart": "Redémarrage de l'histoire.",
+    "retry_prompt": "Réessayer ?"
+  },
+  "status": {
+    "turn": "tour {turn_number} | {provider_summary} | tokens utilisés : {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "Écris tout le texte généré en {language}.",
+    "openings_language_instruction": "Écris toutes les lignes d'ouverture en {language}."
+  },
+  "layout": {
+    "command_help": "Choisir : a (première option), b (deuxième option), g (régénérer), r (redémarrer), q (quitter)"
+  },
+  "engine": {
+    "asking": "Interrogation du moteur d'histoire...",
+    "generating_openings": "Création des ouvertures...",
+    "generating_ascii": "Création de la scène ASCII..."
+  },
+  "story": {
+    "verify": "Vérification de la connexion du fournisseur..."
+  }
+}

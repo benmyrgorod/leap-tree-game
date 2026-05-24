@@ -25,6 +25,7 @@ from leap_tree_game.ui.console import (
 )
 from leap_tree_game.ui.forms import ask_choice_command
 from leap_tree_game.ui.screens import ask_game_setup
+from leap_tree_game.i18n import t
 
 T = TypeVar("T")
 
@@ -75,13 +76,22 @@ class GameEngine:
 
     def _play_turns(self, state: GameState) -> bool:
         while True:
-            command = ask_choice_command(console=self.console)
+            command = ask_choice_command(
+                console=self.console,
+                language=state.setup.language,
+            )
 
             if command == "q":
-                render_success("Goodbye.", active_console=self.console)
+                render_success(
+                    t(state.setup.language, "turn.goodbye"),
+                    active_console=self.console,
+                )
                 return False
             if command == "r":
-                render_warning("Restarting story.", active_console=self.console)
+                render_warning(
+                    t(state.setup.language, "turn.restart"),
+                    active_console=self.console,
+                )
                 return True
             if command == "g":
                 regenerated = self._generate_regenerated_turn_with_retry(state)
@@ -116,17 +126,31 @@ class GameEngine:
 
     def _start_initial_turn(self, state: GameState) -> StoryResponse | None:
         response = self._generate_with_retry(
-            lambda: self.story_client.generate_initial(state.setup),
+            lambda: self.story_client.generate_initial(
+                state.setup,
+                language=state.setup.language,
+            ),
             turn_number=state.next_turn_number(),
+            status_language=state.setup.language,
         )
         if response is None:
             return None
         return response
 
-    def _generate_opening_options(self, genre: str, setting: str) -> list[str] | None:
+    def _generate_opening_options(
+        self,
+        genre: str,
+        setting: str,
+        language: str,
+    ) -> list[str] | None:
         return self._generate_with_retry(
-            lambda: self.story_client.generate_openings(genre=genre, setting=setting),
-            status_message="[dim]Generating opening choices...[/dim]",
+            lambda: self.story_client.generate_openings(
+                genre=genre,
+                setting=setting,
+                language=language,
+            ),
+            status_message="engine.generating_openings",
+            status_language=language,
         )
 
     def _generate_next_turn_with_retry(
@@ -137,7 +161,12 @@ class GameEngine:
         turn_number: int,
     ) -> StoryResponse | None:
         return self._generate_with_retry(
-            lambda: self.story_client.generate_next(state, choice),
+            lambda: self.story_client.generate_next(
+                state,
+                choice,
+                language=state.setup.language,
+            ),
+            status_language=state.setup.language,
             turn_number=turn_number,
         )
 
@@ -181,12 +210,14 @@ class GameEngine:
                     state.setup,
                     avoid_continuations=avoid,
                     continuation_shape=continuation_shape,
+                    language=state.setup.language,
                 )
             return self.story_client.generate_next(
                 state,
                 previous_choice,
                 avoid_continuations=avoid,
                 continuation_shape=continuation_shape,
+                language=state.setup.language,
             )
 
         return self.story_client.generate_next(
@@ -194,6 +225,7 @@ class GameEngine:
             last_turn.choice,
             avoid_continuations=avoid,
             continuation_shape=continuation_shape,
+            language=state.setup.language,
         )
 
     def _warn_if_still_duplicate(
@@ -217,17 +249,22 @@ class GameEngine:
         state: GameState,
         turn_number: int,
     ) -> None:
-        art_height = self._art_height(response)
+        art_height = self._art_height(
+            response,
+            language=state.setup.language,
+        )
         art_width = self._art_width()
         ascii_art = self._generate_with_retry(
             lambda: self.story_client.generate_ascii_art(
                 response.story,
                 genre=state.setup.genre,
                 setting=state.setup.setting,
+                language=state.setup.language,
                 width=art_width,
                 height=art_height,
             ),
-            status_message="[dim]Generating ASCII scene...[/dim]",
+            status_message="engine.generating_ascii",
+            status_language=state.setup.language,
             ask_to_retry=False,
             turn_number=turn_number,
         )
@@ -235,25 +272,44 @@ class GameEngine:
         render_turn_screen(
             response,
             active_console=self.console,
-            subtitle=self._turn_status(turn_number),
+            subtitle=self._turn_status(
+                turn_number=turn_number,
+                language=state.setup.language,
+            ),
+            language=state.setup.language,
             ascii_art=ascii_art,
         )
 
-    def _turn_status(self, turn_number: int) -> str:
+    def _turn_status(
+        self,
+        turn_number: int,
+        *,
+        language: str = "en",
+    ) -> str:
         return self.layout.turn_status_label(
             turn_number,
             self.settings.summary(),
             self.story_client.total_tokens,
+            language=language,
+            status_label=t(
+                language,
+                "status.turn",
+                turn_number=turn_number,
+                provider_summary=self.settings.summary(),
+                tokens_used=self.story_client.total_tokens,
+            ),
         )
 
     def _art_width(self) -> int:
         return self.layout.art_width()
 
-    def _art_height(self, response: StoryResponse) -> int:
+    def _art_height(self, response: StoryResponse, language: str = "en") -> int:
         return self.layout.art_height(
             response.story,
             response.option_a,
             response.option_b,
+            language=language,
+            command_text=t(language, "layout.command_help"),
         )
 
     def _estimated_non_art_line_count(self, response: StoryResponse, width: int) -> int:
@@ -262,29 +318,45 @@ class GameEngine:
             response.option_a,
             response.option_b,
             width=width,
+            language="en",
+            command_text=t("en", "layout.command_help"),
         )
 
     def _generate_with_retry(
         self,
         operation: Callable[[], T],
         *,
-        status_message: str = "[dim]Asking the story engine...[/dim]",
+        status_message: str = "engine.asking",
+        status_language: str = "en",
         ask_to_retry: bool = True,
         turn_number: int | None = None,
     ) -> T | None:
         while True:
             try:
-                with self.console.status(status_message):
+                with self.console.status(
+                    f"[dim]{t(status_language, status_message)}[/dim]"
+                ):
                     return operation()
             except StoryGenerationError as exc:
                 if turn_number is None:
                     render_error(str(exc), active_console=self.console)
                 else:
                     render_error(
-                        f"turn {turn_number}: {str(exc)}",
+                        t(
+                            status_language,
+                            "status.turn",
+                            turn_number=turn_number,
+                            provider_summary=self.settings.summary(),
+                            tokens_used=self.story_client.total_tokens,
+                        )
+                        + f": {str(exc)}",
                         active_console=self.console,
                     )
                 if not ask_to_retry:
                     return None
-                if not Confirm.ask("Retry?", default=True, console=self.console):
+                if not Confirm.ask(
+                    t(status_language, "turn.retry_prompt"),
+                    default=True,
+                    console=self.console,
+                ):
                     return None

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "branching AI stories"
+  },
+  "language": {
+    "code": "en",
+    "name": "English",
+    "prompt_name": "English",
+    "menu_label": "English"
+  },
+  "setup": {
+    "language_title": "Language",
+    "genre_title": "Genre",
+    "setting_title": "Setting",
+    "opening_title": "Opening",
+    "step": "setup {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "Zero to Hero",
+      "Chosen One",
+      "Adventure or Quest",
+      "Revenge Story",
+      "Comedy",
+      "Tragedy",
+      "Love",
+      "Mystery",
+      "Other"
+    ],
+    "settings": [
+      "Prehistoric",
+      "Biblical Paradise",
+      "Ancient Civilizations",
+      "Classical Antiquity (Israel/Greece/Rome)",
+      "Middle Ages",
+      "Age of Pirates and Exploration",
+      "Wild West",
+      "Modern Day",
+      "Post-Apocalyptic",
+      "Sci Fi Paradise",
+      "Fantasy",
+      "Superheroes",
+      "Other"
+    ]
+  },
+  "forms": {
+    "select_option": "Select an option by number or name.",
+    "custom_value_prompt": "Enter a custom value for {field}.",
+    "selection_error": "Please choose one of the listed options.",
+    "custom_value_error": "Custom value is required for {other_label}.",
+    "other_label": "Other",
+    "choice_prompt": "Choose",
+    "number_header": "Number",
+    "option_header": "Option"
+  },
+  "turn": {
+    "current_story": "Current story",
+    "command_help": "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)",
+    "command_prompt": "Choose",
+    "goodbye": "Goodbye.",
+    "restart": "Restarting story.",
+    "retry_prompt": "Retry?"
+  },
+  "status": {
+    "turn": "turn {turn_number} | {provider_summary} | tokens used: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "Write all generated story text in {language}.",
+    "openings_language_instruction": "Write all opening lines in {language}."
+  },
+  "layout": {
+    "command_help": "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)"
+  },
+  "engine": {
+    "asking": "Asking the story engine...",
+    "generating_openings": "Generating opening choices...",
+    "generating_ascii": "Generating ASCII scene..."
+  },
+  "story": {
+    "verify": "Verifying provider connection..."
+  }
+}

@@ -10,6 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from leap_tree_game.models.story import StoryResponse
+from leap_tree_game.i18n import t
 
 
 console = Console()
@@ -47,6 +48,7 @@ def render_turn_screen(
     *,
     active_console: Console = console,
     subtitle: str | None = None,
+    language: str = "en",
     ascii_art: str | None = None,
 ) -> None:
     frame_width = max(40, (active_console.width or 100) - 4)
@@ -57,18 +59,18 @@ def render_turn_screen(
         renderables.append(Text(""))
     story = Panel(
         response.story,
-        title="[dim]Current story[/dim]",
+        title=f"[dim]{t(language, 'turn.current_story')}[/dim]",
         border_style="cyan",
         box=box.ROUNDED,
         padding=(1, 2),
         width=frame_width,
     )
     commands = Text(
-        "\nChoose: a (first option), b (second option), g (regenerate), r (restart), q (quit)",
+        f"\n{t(language, 'turn.command_help')}",
         style="dim",
     )
     render_framed_screen(
-        "Leap Tree Game",
+        t(language, "app.title"),
         *renderables,
         story,
         build_choices_table(response),

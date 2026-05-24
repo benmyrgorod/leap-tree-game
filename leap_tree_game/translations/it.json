@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "Leap Tree Game",
+    "subtitle": "storie ramificate con IA"
+  },
+  "language": {
+    "code": "it",
+    "name": "Italian",
+    "prompt_name": "Italian",
+    "menu_label": "Italiano"
+  },
+  "setup": {
+    "language_title": "Lingua",
+    "genre_title": "Genere",
+    "setting_title": "Ambientazione",
+    "opening_title": "Apertura",
+    "step": "configurazione {step}/{total}"
+  },
+  "options": {
+    "genres": [
+      "Da zero a eroe",
+      "Il prescelto",
+      "Avventura o ricerca",
+      "Storia di vendetta",
+      "Commedia",
+      "Tragedia",
+      "Amore",
+      "Mistero",
+      "Altro"
+    ],
+    "settings": [
+      "Età della preistoria",
+      "Paradiso biblico",
+      "Civiltà antiche",
+      "Antichità classica (Israele/Grecia/Roma)",
+      "Medioevo",
+      "Era dei pirati ed esploratori",
+      "Vecchio West",
+      "Epoca moderna",
+      "Post-apocalittico",
+      "Paradis fantastico di fantascienza",
+      "Fantasy",
+      "Supereroi",
+      "Altro"
+    ]
+  },
+  "forms": {
+    "select_option": "Scegli un'opzione per numero o nome.",
+    "custom_value_prompt": "Inserisci un valore personalizzato per {field}.",
+    "selection_error": "Scegli una delle opzioni elencate.",
+    "custom_value_error": "È richiesto un valore personalizzato per {other_label}.",
+    "other_label": "Altro",
+    "choice_prompt": "Scegli",
+    "number_header": "Numero",
+    "option_header": "Opzione"
+  },
+  "turn": {
+    "current_story": "Storia attuale",
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), g (rigenera), r (riavvia), q (esci)",
+    "command_prompt": "Scegli",
+    "goodbye": "Arrivederci.",
+    "restart": "Riavvio della storia in corso.",
+    "retry_prompt": "Riprova?"
+  },
+  "status": {
+    "turn": "turno {turn_number} | {provider_summary} | token usati: {tokens_used}"
+  },
+  "prompts": {
+    "story_language_instruction": "Scrivi tutto il testo generato in {language}.",
+    "openings_language_instruction": "Scrivi tutte le righe di apertura in {language}."
+  },
+  "layout": {
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), g (rigenera), r (riavvia), q (esci)"
+  },
+  "engine": {
+    "asking": "Richiesta al motore della storia in corso...",
+    "generating_openings": "Generazione delle aperture...",
+    "generating_ascii": "Generazione della scena ASCII..."
+  },
+  "story": {
+    "verify": "Verifica della connessione del provider..."
+  }
+}

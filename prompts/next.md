@@ -11,6 +11,8 @@ Full story history so far:
 Current canonical story so far:
 {current_story}
 
+Write all generated story text in {language}.
+
 The player selected option {choice_label}: {choice_text}
 
 Return the current canonical story unchanged as the "story" value.

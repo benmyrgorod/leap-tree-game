@@ -25,6 +25,7 @@ class FakeStoryClient:
         *,
         avoid_continuations: tuple[str, str] | None = None,
         continuation_shape=None,
+        language: str | None = None,
     ) -> StoryResponse:
         self.initial_calls.append((setup, avoid_continuations, continuation_shape))
         return self._pop_response()
@@ -36,6 +37,7 @@ class FakeStoryClient:
         *,
         avoid_continuations: tuple[str, str] | None = None,
         continuation_shape=None,
+        language: str | None = None,
     ) -> StoryResponse:
         self.next_calls.append((state.current_story(), avoid_continuations, continuation_shape))
         return self._pop_response()

@@ -3,6 +3,7 @@ You are writing an interactive branching story.
 Selected genre: {genre}
 Selected setting: {setting}
 Opening line: {opening}
+Write all generated story text in {language}.
 
 Return the opening line unchanged as the "story" value.
 Do not add plot, characters, or narration to "story".
