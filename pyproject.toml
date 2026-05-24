@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leaptreegame"
+version = "0.2.0"
+
+[project.scripts]
+leaptreegame = "leap_tree_game.app:main"
+
+[tool.setuptools]
+packages = ["leap_tree_game"]
