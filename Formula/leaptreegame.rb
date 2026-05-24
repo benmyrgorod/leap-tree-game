@@ -11,6 +11,8 @@ class Leaptreegame < Formula
 
   def install
     venv = virtualenv_create(libexec, "python3.12")
-    venv.pip_install_and_link Pathname.pwd
+    system Formula["python@3.12"].opt_bin/"python3.12", "-m", "pip", "--python=#{venv.root}/bin/python", "install", "--no-cache-dir", "."
+
+    bin.install_symlink (libexec/"bin/leaptreegame")
   end
 end
