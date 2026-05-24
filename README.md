@@ -4,48 +4,34 @@ A small Python 3.12+ CLI story game. Pick a genre and setting, choose from AI-ge
 
 ## Install
 
-### From PyPI
-
-```bash
-python3 -m pip install leaptreegame
-```
-
-Then run:
-
-```bash
-leaptreegame --help
-```
-
-### From Homebrew
+### Via Homebrew
 
 ```bash
 brew tap benmyrgorod/leaptreegame
 brew install leaptreegame
 ```
 
-Source: [benmyrgorod/homebrew-leaptreegame](https://github.com/benmyrgorod/homebrew-leaptreegame)
-
-If you want to run from source instead of a package install:
+### Via pipx
 
 ```bash
+pipx install leaptreegame
+```
+
+### From PyPI
+
+```bash
+python3 -m pip install leaptreegame
+```
+
+### From Source
+
+```bash
+git clone git@github.com:benmyrgorod/homebrew-leaptreegame.git leaptreegame
+cd leaptreegame
 python3 -m pip install -r requirements.txt
 ```
 
-## Configure
-
-```bash
-python -m leap_tree_game.app setup
-```
-
-By default, the setup wizard writes configuration to `~/.leaptreegame/.env` and the app reads from there on launch (or the explicit path passed by tests).
-
-Configuration is stored in `.env` format with one of the supported providers:
-
-- `openai`
-- `anthropic`
-- `ollama`
-
-Local Ollama does not require an API key when using `http://localhost:11434/v1`.
+Source: [benmyrgorod/homebrew-leaptreegame](https://github.com/benmyrgorod/homebrew-leaptreegame)
 
 ## Play
 
@@ -53,20 +39,29 @@ Local Ollama does not require an API key when using `http://localhost:11434/v1`.
 leaptreegame
 ```
 
-or from source:
+or when running from source:
 
 ```bash
 python -m leap_tree_game.app
 ```
 
-Useful commands:
+## Config
 
-```bash
-leaptreegame --help
-leaptreegame doctor
-leaptreegame setup
-leaptreegame play
-```
+By default, the setup wizard writes configuration to `~/.leaptreegame/.env` and the app reads from there on launch. Configuration is stored in  `~/.leaptreegame/.env` with one of the supported providers:
+
+- `openai`
+- `anthropic`
+- `ollama`
+
+Local Ollama does not require an API key when using `http://localhost:11434/v1`.
+
+## Useful Commands
+
+* `leaptreegame --help` - display help
+* `leaptreegame --version` - display version
+* `leaptreegame doctor` - validate Python, dependencies, and provider configuration
+* `leaptreegame setup` - regenerate `.env` provider configuration
+* `leaptreegame play` - start the normal play flow
 
 ## Test
 
@@ -76,19 +71,10 @@ python -m pytest
 
 The unit tests do not make live AI requests. Live provider smoke tests are intentionally left out of the MVP test path.
 
-## Versioning and Release
+## Release
 
-- Package version: `0.1`
-- Git-augmented build metadata is included in `--version` output when available.
+To create a release:
 
-```bash
-python -m leap_tree_game.app --version
-```
-
-Example: `0.1+g34ad2c6`
-
-To create a release, push a version tag (for example `v0.1.0`) and GitHub Actions will:
-
-- run the test suite,
-- generate a source archive,
-- publish a GitHub Release artifact.
+1. Update version in `pyproject.toml`
+2. Commit and push
+3. Tag the same version (i.e. `v0.3.1`)
