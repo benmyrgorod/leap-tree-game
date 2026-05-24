@@ -4,6 +4,8 @@ Original setup:
 Genre: {genre}
 Setting: {setting}
 Opening line: {opening}
+Normality level: {normality_level}
+Language level: {language_level}
 
 Full story history so far:
 {history}

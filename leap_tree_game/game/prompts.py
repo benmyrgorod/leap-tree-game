@@ -68,6 +68,22 @@ OPENINGS = [
     "Other",
 ]
 
+NORMALITY_LEVELS = [
+    "Highly realistic",
+    "Mostly realistic",
+    "Balanced",
+    "Unpredictable",
+    "Highly unpredictable",
+]
+
+LANGUAGE_LEVELS = [
+    "Conversational",
+    "Literary",
+    "Geeky",
+    "Poetic",
+    "Cinematic",
+]
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = PROJECT_ROOT / "prompts"
 CONTINUATION_SHAPE_INSTRUCTIONS: dict[ContinuationShape, str] = {
@@ -102,6 +118,8 @@ def build_initial_prompt(
         genre=setup.genre,
         setting=setup.setting,
         opening=setup.opening,
+        normality_level=setup.normality_level,
+        language_level=setup.language_level,
         language=language_display_name(language_code),
         continuation_start_instruction=_continuation_start_instruction(setup.opening),
         continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
@@ -127,6 +145,8 @@ def build_next_prompt(
         genre=state.setup.genre,
         setting=state.setup.setting,
         opening=state.setup.opening,
+        normality_level=state.setup.normality_level,
+        language_level=state.setup.language_level,
         history=state.full_story_history(),
         current_story=current_story,
         choice_label=choice.label,
@@ -170,6 +190,8 @@ def build_openings_prompt(
     *,
     genre: str,
     setting: str,
+    normality_level: str = "Balanced",
+    language_level: str = "Conversational",
     count: int = 10,
     language: str | None = None,
     random_marker: str | None = None,
@@ -181,6 +203,8 @@ def build_openings_prompt(
         template,
         genre=genre,
         setting=setting,
+        normality_level=normality_level,
+        language_level=language_level,
         count=str(count),
         language=language_display_name(language_code),
         random_marker=marker,

@@ -141,12 +141,16 @@ class GameEngine:
         self,
         genre: str,
         setting: str,
+        normality_level: str,
+        language_level: str,
         language: str,
     ) -> list[str] | None:
         return self._generate_with_retry(
             lambda: self.story_client.generate_openings(
                 genre=genre,
                 setting=setting,
+                normality_level=normality_level,
+                language_level=language_level,
                 language=language,
             ),
             status_message="engine.generating_openings",

@@ -6,6 +6,7 @@ from leap_tree_game.game.prompts import (
     GENRES,
     OPENINGS,
     SETTINGS,
+    LANGUAGE_LEVELS,
     build_initial_prompt,
     build_ascii_art_prompt,
     build_openings_prompt,
@@ -37,6 +38,8 @@ def test_initial_prompt_includes_setup_and_json_contract() -> None:
     assert '"story"' in prompt
     assert '"option_a"' in prompt
     assert "Return the opening line unchanged" in prompt
+    assert "Normality level: Balanced" in prompt
+    assert f"Language level: {LANGUAGE_LEVELS[0]}" in prompt
     assert "appended directly" in prompt
     assert "3-7 words" in prompt
     assert "should continue the previous sentence" in prompt
@@ -67,6 +70,8 @@ def test_next_prompt_includes_full_history_and_selected_choice() -> None:
     assert "Comedy" in prompt
     assert "Wild West" in prompt
     assert "On a perfectly ordinary impossible day, a sheriff discovered singing horses." in prompt
+    assert "Normality level: Balanced" in prompt
+    assert f"Language level: {LANGUAGE_LEVELS[0]}" in prompt
     assert "Turn 1 option A continuation: , a sheriff discovered singing horses." in prompt
     assert "selected option A continuation: , a sheriff discovered singing horses." in prompt
     assert "The player selected option A: , a sheriff discovered singing horses." in prompt
@@ -235,12 +240,16 @@ def test_openings_prompt_includes_genre_setting_randomness_and_json_contract() -
     prompt = build_openings_prompt(
         genre="Mystery",
         setting="Wild West",
+        normality_level="Mostly realistic",
+        language_level="Poetic",
         count=4,
         random_marker="424242",
     )
 
     assert "Selected genre: Mystery" in prompt
     assert "Selected setting: Wild West" in prompt
+    assert "Normality level: Mostly realistic" in prompt
+    assert "Language level: Poetic" in prompt
     assert "Randomness marker: 424242" in prompt
     assert "Generate exactly 4 opening lines." in prompt
     assert "vivid, surprising, and meaningfully different" in prompt

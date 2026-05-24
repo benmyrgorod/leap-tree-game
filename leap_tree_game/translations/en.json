@@ -14,6 +14,8 @@
     "genre_title": "Genre",
     "setting_title": "Setting",
     "opening_title": "Opening",
+    "normality_title": "Normality level",
+    "language_level_title": "Language level",
     "step": "setup {step}/{total}"
   },
   "options": {
@@ -50,6 +52,20 @@
       "Feudal Japan",
       "Renaissance Europe",
       "Other"
+    ],
+    "normality_levels": [
+      "Highly realistic",
+      "Mostly realistic",
+      "Balanced",
+      "Unpredictable",
+      "Highly unpredictable"
+    ],
+    "language_levels": [
+      "Conversational",
+      "Literary",
+      "Geeky",
+      "Poetic",
+      "Cinematic"
     ]
   },
   "forms": {

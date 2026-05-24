@@ -295,6 +295,8 @@ class StoryClient:
         *,
         genre: str,
         setting: str,
+        normality_level: str = "Balanced",
+        language_level: str = "Conversational",
         count: int = 11,
         language: str | None = None,
     ) -> list[str]:
@@ -303,6 +305,8 @@ class StoryClient:
                 build_openings_prompt(
                     genre=genre,
                     setting=setting,
+                    normality_level=normality_level,
+                    language_level=language_level,
                     count=count,
                     language=language,
                 ),

@@ -3,6 +3,8 @@ You are writing an interactive branching story.
 Selected genre: {genre}
 Selected setting: {setting}
 Opening line: {opening}
+Normality level: {normality_level}
+Language level: {language_level}
 Write all generated story text in {language}.
 
 Return the opening line unchanged as the "story" value.

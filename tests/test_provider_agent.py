@@ -310,6 +310,8 @@ def test_story_client_generates_openings_from_genre_and_setting() -> None:
     openings = client.generate_openings(
         genre="Mystery",
         setting="Wild West",
+        normality_level="Mostly realistic",
+        language_level="Poetic",
         count=3,
     )
 
@@ -320,6 +322,8 @@ def test_story_client_generates_openings_from_genre_and_setting() -> None:
     ]
     assert "Selected genre: Mystery" in agent.prompts[-1]
     assert "Selected setting: Wild West" in agent.prompts[-1]
+    assert "Normality level: Mostly realistic" in agent.prompts[-1]
+    assert "Language level: Poetic" in agent.prompts[-1]
     assert "Generate exactly 3 opening lines." in agent.prompts[-1]
 
 

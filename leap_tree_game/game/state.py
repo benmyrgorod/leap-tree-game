@@ -29,6 +29,8 @@ class GameSetup(NonEmptyTextModel):
     setting: str
     opening: str
     language: str = "en"
+    normality_level: str = "Balanced"
+    language_level: str = "Conversational"
 
 
 class Choice(NonEmptyTextModel):
@@ -136,6 +138,8 @@ class GameState(BaseModel):
         lines = [
             f"Genre: {self.setup.genre}",
             f"Setting: {self.setup.setting}",
+            f"Normality: {self.setup.normality_level}",
+            f"Language level: {self.setup.language_level}",
             f"Opening: {self.setup.opening}",
             f"Current story so far: {self.current_story()}",
         ]
