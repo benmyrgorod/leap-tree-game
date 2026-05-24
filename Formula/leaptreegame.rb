@@ -3,8 +3,8 @@ class Leaptreegame < Formula
 
   desc "Leap Tree Game is an experimental AI storytelling game"
   homepage "https://github.com/benmyrgorod/homebrew-leaptreegame"
-  url "https://github.com/benmyrgorod/homebrew-leaptreegame/releases/download/v0.2.7/leaptreegame-0.2.7.tar.gz"
-  sha256 "b48d0b5a1e36c00d230735f6202854314fd6d3a5398ee6071622e591bec0619a"
+  url "https://github.com/benmyrgorod/homebrew-leaptreegame/releases/download/v0.2.8/leaptreegame-0.2.8.tar.gz"
+  sha256 "878d74b2de6bcdd42171902a5ead3cf389786f1e852d12ec8f1df7ba9d42f06a"
   license "MIT"
 
   depends_on "python@3.12"
