@@ -22,7 +22,8 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["leap_tree_game*"]
+include = ["leap_tree_game*", "prompts"]
 
 [tool.setuptools.package-data]
 "leap_tree_game" = ["translations/*.json"]
+"prompts" = ["*.md"]
