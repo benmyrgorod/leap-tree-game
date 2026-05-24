@@ -295,7 +295,7 @@ class StoryClient:
         *,
         genre: str,
         setting: str,
-        count: int = 10,
+        count: int = 11,
         language: str | None = None,
     ) -> list[str]:
         try:

@@ -28,6 +28,9 @@ GENRES = [
     "Tragedy",
     "Love",
     "Mystery",
+    "Satire",
+    "Thriller",
+    "Crime",
     "Other",
 ]
 
@@ -44,6 +47,11 @@ SETTINGS = [
     "Sci Fi Paradise",
     "Fantasy",
     "Superheroes",
+    "Cyberpunk",
+    "Steampunk",
+    "Victorian Era",
+    "Feudal Japan",
+    "Renaissance Europe",
     "Other",
 ]
 
@@ -56,6 +64,7 @@ OPENINGS = [
     "Someone stole the sun and replaced it with",
     "A young lady mysteriously asked",
     "Nobody understood why the whales suddenly",
+    "A bell rang in the city center",
     "Other",
 ]
 

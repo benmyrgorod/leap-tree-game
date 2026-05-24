@@ -26,6 +26,9 @@
       "Tragedia",
       "Amore",
       "Mistero",
+      "Satira",
+      "Thriller",
+      "Crimine",
       "Altro"
     ],
     "settings": [
@@ -41,9 +44,14 @@
       "Paradis fantastico di fantascienza",
       "Fantasy",
       "Supereroi",
-      "Altro"
-    ]
-  },
+      "Cyberpunk",
+      "Steampunk",
+      "Era vittoriana",
+      "Giappone feudale",
+      "Europa rinascimentale",
+    "Altro"
+  ]
+},
   "forms": {
     "select_option": "Scegli un'opzione per numero o nome.",
     "custom_value_prompt": "Inserisci un valore personalizzato per {field}.",

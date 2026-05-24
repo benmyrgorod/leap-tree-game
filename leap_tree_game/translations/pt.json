@@ -26,6 +26,9 @@
       "Tragédia",
       "Amor",
       "Mistério",
+      "Sátira",
+      "Thriller",
+      "Crime",
       "Outro"
     ],
     "settings": [
@@ -41,6 +44,11 @@
       "Paraíso de ficção científica",
       "Fantasia",
       "Super-heróis",
+      "Ciberpunk",
+      "Steampunk",
+      "Era vitoriana",
+      "Japão feudal",
+      "Europa Renascentista",
       "Outro"
     ]
   },
