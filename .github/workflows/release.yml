@@ -74,8 +74,16 @@ jobs:
       - name: Update Homebrew formula
         env:
           TAG_NAME: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
+          SOURCE_REPO: ${{ github.repository }}
+          HOMEBREW_TAP_REPO: benmyrgorod/homebrew-leaptreegame
+          HOMEBREW_TAP_BRANCH: main
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
+            echo "Missing HOMEBREW_TAP_TOKEN secret."
+            exit 1
+          fi
+
           SDIST=$(ls dist/*.tar.gz | head -n 1)
           if [ -z "${SDIST}" ]; then
             echo "No sdist archive found in dist/."
@@ -84,16 +92,29 @@ jobs:
 
           SHA256=$(sha256sum "${SDIST}" | awk '{print $1}')
           DIST_FILENAME="$(basename "${SDIST}")"
-          RELEASE_URL="https://github.com/${REPO}/releases/download/${TAG_NAME}/${DIST_FILENAME}"
-          FORMULA_TMP="$(mktemp)"
+          RELEASE_URL="https://github.com/${SOURCE_REPO}/releases/download/${TAG_NAME}/${DIST_FILENAME}"
+          HOMEBREW_TAP_PATH="${RUNNER_TEMP}/homebrew-leaptreegame"
 
-          python - "$RELEASE_URL" "$SHA256" "$FORMULA_TMP" <<'PY'
+          rm -rf "${HOMEBREW_TAP_PATH}"
+          git clone --depth 1 \
+            "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${HOMEBREW_TAP_REPO}.git" \
+            "${HOMEBREW_TAP_PATH}"
+          cd "${HOMEBREW_TAP_PATH}"
+          git checkout "${HOMEBREW_TAP_BRANCH}"
+
+          FORMULA_PATH="Formula/leaptreegame.rb"
+          if [ ! -f "${FORMULA_PATH}" ]; then
+            echo "Formula file not found: ${FORMULA_PATH}"
+            exit 1
+          fi
+
+          python - "$RELEASE_URL" "$SHA256" "${FORMULA_PATH}" <<'PY'
           import re
           import sys
           from pathlib import Path
 
-          url, sha, output_path = sys.argv[1], sys.argv[2], Path(sys.argv[3])
-          text = Path("Formula/leaptreegame.rb").read_text(encoding="utf-8")
+          url, sha, path = sys.argv[1], sys.argv[2], Path(sys.argv[3])
+          text = path.read_text(encoding="utf-8")
 
           new_text = re.sub(
               r'^(\s*url\s+)"[^"]+"$',
@@ -111,18 +132,11 @@ jobs:
           )
           if new_text == text:
               raise SystemExit("No formula URL/SHA fields were updated")
-          output_path.write_text(new_text, encoding="utf-8")
+          path.write_text(new_text, encoding="utf-8")
           PY
-          if [ -z "${FORMULA_TMP}" ]; then
-            echo "Failed to allocate temporary formula path."
-            exit 1
-          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin "${{ github.event.repository.default_branch }}"
-          git switch "${{ github.event.repository.default_branch }}"
-          mv "${FORMULA_TMP}" Formula/leaptreegame.rb
           git add Formula/leaptreegame.rb
           if git diff --cached --quiet; then
             echo "Formula already up-to-date."
@@ -130,4 +144,4 @@ jobs:
           fi
 
           git commit -m "Update Homebrew formula for ${TAG_NAME}"
-          git push origin "${{ github.event.repository.default_branch }}"
+          git push origin "${HOMEBREW_TAP_BRANCH}"
