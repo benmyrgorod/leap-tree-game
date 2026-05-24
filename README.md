@@ -53,7 +53,7 @@ By default, the setup wizard writes configuration to `~/.leaptreegame/.env` and 
 
 Local Ollama does not require an API key when using `http://localhost:11434/v1`.
 
-## Useful Commands
+## Commands
 
 * `leaptreegame --help` - display help
 * `leaptreegame --version` - display version
