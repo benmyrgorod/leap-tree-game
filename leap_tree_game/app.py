@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -13,6 +12,7 @@ from rich.table import Table
 
 from leap_tree_game import __version__
 from leap_tree_game.config.settings import (
+    default_env_path,
     ConfigError,
     MissingConfigError,
     ProviderSettings,
@@ -66,7 +66,7 @@ def setup() -> None:
     """Regenerate `.env` provider configuration."""
 
     try:
-        run_setup_wizard(Path(".env"), console=console)
+        run_setup_wizard(default_env_path(), console=console)
     except ValueError as exc:
         render_error(str(exc), active_console=console)
         raise typer.Exit(1) from exc
@@ -91,15 +91,15 @@ def doctor() -> None:
         table.add_row(module_name, _status(present, "installed" if present else "missing"))
 
     try:
-        settings = load_settings(Path(".env"))
+        settings = load_settings()
     except MissingConfigError:
         ok = False
-        table.add_row(".env", "[yellow]missing[/yellow]")
+        table.add_row(str(default_env_path()), "[yellow]missing[/yellow]")
     except ConfigError as exc:
         ok = False
-        table.add_row(".env", f"[red]{exc}[/red]")
+        table.add_row(str(default_env_path()), f"[red]{exc}[/red]")
     else:
-        table.add_row(".env", f"[green]{settings.summary()}[/green]")
+        table.add_row(str(default_env_path()), f"[green]{settings.summary()}[/green]")
 
     console.print(table)
     if not ok:
@@ -109,21 +109,21 @@ def doctor() -> None:
 
 def _load_or_setup() -> ProviderSettings:
     try:
-        return load_settings(Path(".env"))
+        return load_settings()
     except MissingConfigError:
         render_framed_screen(
             "Leap Tree Game",
             Text("No `.env` found. Starting setup.", style="yellow"),
             active_console=console,
         )
-        return run_setup_wizard(Path(".env"), console=console)
+        return run_setup_wizard(default_env_path(), console=console)
     except ConfigError as exc:
         render_framed_screen(
             "Leap Tree Game",
             Text(f"Configuration needs attention: {exc}", style="yellow"),
             active_console=console,
         )
-        return run_setup_wizard(Path(".env"), console=console)
+        return run_setup_wizard(default_env_path(), console=console)
 
 
 def _verify_llm_connection(settings: ProviderSettings) -> None:
@@ -150,7 +150,7 @@ def _verify_llm_connection(settings: ProviderSettings) -> None:
 
 
 def _clear_provider_env_file() -> None:
-    env_path = Path(".env")
+    env_path = default_env_path()
     if not env_path.exists():
         return
     try:

@@ -78,8 +78,12 @@ class ProviderSettings(BaseModel):
         return f"{self.provider} / {self.model}"
 
 
-def load_settings(env_path: Path | str = ".env") -> ProviderSettings:
-    path = Path(env_path)
+def default_env_path() -> Path:
+    return Path.home() / ".leaptreegame" / ".env"
+
+
+def load_settings(env_path: Path | str | None = None) -> ProviderSettings:
+    path = _resolve_env_path(env_path)
     if not path.exists():
         raise MissingConfigError(f"No configuration file found at {path}.")
 
@@ -102,8 +106,9 @@ def load_settings(env_path: Path | str = ".env") -> ProviderSettings:
     return settings
 
 
-def write_env_file(settings: ProviderSettings, env_path: Path | str = ".env") -> None:
-    path = Path(env_path)
+def write_env_file(settings: ProviderSettings, env_path: Path | str | None = None) -> None:
+    path = _resolve_env_path(env_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         ("LEAP_TREE_PROVIDER", settings.provider),
         ("LEAP_TREE_MODEL", settings.model),
@@ -117,6 +122,10 @@ def write_env_file(settings: ProviderSettings, env_path: Path | str = ".env") ->
         path.chmod(stat.S_IRUSR | stat.S_IWUSR)
     except OSError:
         pass
+
+
+def _resolve_env_path(env_path: Path | str | None) -> Path:
+    return default_env_path() if env_path is None else Path(env_path)
 
 
 def _read_dotenv(path: Path) -> dict[str, str]:

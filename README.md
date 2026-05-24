@@ -14,7 +14,9 @@ python3 -m pip install -r requirements.txt
 python -m leap_tree_game.app setup
 ```
 
-The setup wizard writes `.env` with one of the supported providers:
+By default, the setup wizard writes configuration to `~/.leaptreegame/.env` and the app reads from there on launch (or the explicit path passed by tests).
+
+Configuration is stored in `.env` format with one of the supported providers:
 
 - `openai`
 - `anthropic`

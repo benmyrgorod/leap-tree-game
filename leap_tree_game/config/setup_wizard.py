@@ -9,6 +9,7 @@ from rich.text import Text
 from rich.prompt import Prompt
 
 from leap_tree_game.config.settings import (
+    default_env_path,
     DEFAULT_MODELS,
     DEFAULT_OLLAMA_BASE_URL,
     ProviderSettings,
@@ -20,7 +21,7 @@ from leap_tree_game.ui.console import render_framed_screen
 
 
 def run_setup_wizard(
-    env_path: Path | str = ".env",
+    env_path: Path | str | None = None,
     *,
     console: Console | None = None,
 ) -> ProviderSettings:
@@ -77,7 +78,8 @@ def run_setup_wizard(
         ollama_api_key=ollama_api_key,
     )
     write_env_file(settings, env_path)
-    active_console.print(f"[green]Saved configuration to {Path(env_path)}[/green]")
+    env_file = Path(env_path) if env_path is not None else default_env_path()
+    active_console.print(f"[green]Saved configuration to {env_file}[/green]")
     return settings
 
 

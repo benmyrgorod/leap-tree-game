@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from leap_tree_game.config.settings import (
+    default_env_path,
     ConfigError,
     MissingConfigError,
     ProviderSettings,
@@ -72,3 +73,25 @@ def test_write_env_file_uses_simple_key_value_format(tmp_path: Path) -> None:
     text = env_path.read_text()
     assert "LEAP_TREE_PROVIDER=ollama" in text
     assert "OLLAMA_BASE_URL=http://localhost:11434/v1" in text
+
+
+def test_default_env_path_is_in_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    home_dir = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home_dir))
+
+    assert default_env_path() == home_dir / ".leaptreegame" / ".env"
+
+
+def test_default_env_path_read_write_cycle(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    home_dir = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home_dir))
+    settings = ProviderSettings(
+        provider="openai",
+        model="gpt-5.2",
+        openai_api_key="sk-test-default",
+    )
+    write_env_file(settings)
+
+    loaded = load_settings()
+
+    assert loaded == settings
