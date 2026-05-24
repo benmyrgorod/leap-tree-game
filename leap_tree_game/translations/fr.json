@@ -65,10 +65,17 @@
   },
   "turn": {
     "current_story": "Histoire actuelle",
-    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), s (redémarrer), q (quitter)",
+    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), m (créer l'histoire), s (redémarrer), q (quitter)",
     "command_prompt": "Choisir",
     "goodbye": "Au revoir.",
     "restart": "Redémarrage de l'histoire.",
+    "full_story": "Histoire complète",
+    "storybook_command_prompt": "Action sur l'histoire",
+    "storybook_command_help": "r - régénérer, e - régénérer avec corrections, w - enregistrer, s - redémarrer, q - quitter",
+    "story_edit_prompt": "Saisis les corrections puis appuie sur Entrée pour générer",
+    "story_corrections_prompt": "Saisis des corrections pour régénérer cette histoire, ou appuie Entrée pour revenir :",
+    "story_saved": "Histoire enregistrée : {path}",
+    "story_save_failed": "Impossible d'enregistrer l'histoire.",
     "retry_prompt": "Réessayer ?"
   },
   "status": {
@@ -79,12 +86,13 @@
     "openings_language_instruction": "Écris toutes les lignes d'ouverture en {language}."
   },
   "layout": {
-    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), s (redémarrer), q (quitter)"
+    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), m (créer l'histoire), s (redémarrer), q (quitter)"
   },
   "engine": {
     "asking": "Interrogation du moteur d'histoire...",
     "generating_openings": "Création des ouvertures...",
-    "generating_ascii": "Création de la scène ASCII..."
+    "generating_ascii": "Création de la scène ASCII...",
+    "generating_storybook": "Création de l'histoire complète..."
   },
   "story": {
     "verify": "Vérification de la connexion du fournisseur..."

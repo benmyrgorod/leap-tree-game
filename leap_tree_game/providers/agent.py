@@ -16,6 +16,7 @@ from leap_tree_game.game.prompts import (
     build_initial_prompt,
     build_ascii_art_prompt,
     build_openings_prompt,
+    build_storybook_prompt,
     build_next_prompt,
 )
 from leap_tree_game.game.state import Choice, GameSetup, GameState
@@ -231,6 +232,37 @@ class StoryClient:
         )
         return _with_canonical_story(response, state.current_story(), continuation_shape)
 
+    def generate_storybook(
+        self,
+        source_story: str,
+        *,
+        correction_notes: str | None = None,
+        language: str | None = None,
+    ) -> str:
+        try:
+            raw_output = self._run_sync(
+                build_storybook_prompt(
+                    source_story=source_story,
+                    correction_notes=correction_notes,
+                    language=language,
+                ),
+                output_kind="story_text",
+            )
+            return _coerce_story_text(raw_output)
+        except StoryGenerationError:
+            raise
+        except (ValidationError, ValueError, TypeError) as exc:
+            raise StoryGenerationError(
+                "The model did not return usable story text.",
+                original=exc,
+            ) from exc
+        except Exception as exc:
+            raise _translate_exception(
+                exc,
+                provider=self.settings.provider,
+                model=self.settings.model,
+            ) from exc
+
     def generate(self, prompt: str) -> StoryResponse:
         try:
             raw_output = self._run_sync(prompt)
@@ -382,7 +414,7 @@ class StoryClient:
         self,
         prompt: str,
         *,
-        output_kind: Literal["story", "ascii", "openings"] = "story",
+        output_kind: Literal["story", "ascii", "openings", "story_text"] = "story",
     ):
         if output_kind == "ascii":
             if self.agent is not None:
@@ -396,6 +428,11 @@ class StoryClient:
             else:
                 agent = self.openings_agent or create_openings_agent(self.settings)
                 self.openings_agent = agent
+        elif output_kind == "story_text":
+            if self.agent is not None:
+                agent = self.agent
+            else:
+                agent = self.ascii_agent or create_ascii_agent(self.settings)
         else:
             agent = self.agent or create_story_agent(self.settings)
 
@@ -504,6 +541,16 @@ def _normalize_option(
     if continuation_shape == "continue_sentence":
         return strip_terminal_punctuation(normalized)
     return ensure_terminal_punctuation(normalized)
+
+
+def _coerce_story_text(raw_output: object) -> str:
+    if _is_story_response_text(raw_output):
+        raise ValueError("Story text generation returned structured story JSON instead of plain text.")
+
+    text = str(raw_output).strip()
+    if not text:
+        raise ValueError("Story text response was empty.")
+    return _strip_code_fence(text)
 
 
 def _coerce_ascii_art(

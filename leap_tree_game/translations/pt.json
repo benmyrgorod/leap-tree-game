@@ -64,10 +64,17 @@
   },
   "turn": {
     "current_story": "História atual",
-    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), s (reiniciar), q (sair)",
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), m (fazer história), s (reiniciar), q (sair)",
     "command_prompt": "Escolher",
     "goodbye": "Até logo.",
     "restart": "Reiniciando história.",
+    "full_story": "História completa",
+    "storybook_command_prompt": "Ação da história",
+    "storybook_command_help": "r - regenerar, e - regenerar com correções, w - guardar, s - reiniciar, q - sair",
+    "story_edit_prompt": "Digite correções e pressione Enter para aplicar",
+    "story_corrections_prompt": "Digite correções para regenerar esta história ou pressione Enter para voltar:",
+    "story_saved": "História guardada: {path}",
+    "story_save_failed": "Não foi possível guardar a história.",
     "retry_prompt": "Tentar novamente?"
   },
   "status": {
@@ -78,12 +85,13 @@
     "openings_language_instruction": "Escreva todas as linhas de abertura em {language}."
   },
   "layout": {
-    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), s (reiniciar), q (sair)"
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), m (fazer história), s (reiniciar), q (sair)"
   },
   "engine": {
     "asking": "Perguntando ao mecanismo da história...",
-   "generating_openings": "Gerando opções iniciais...",
-    "generating_ascii": "Gerando cena ASCII..."
+    "generating_openings": "Gerando opções iniciais...",
+    "generating_ascii": "Gerando cena ASCII...",
+    "generating_storybook": "Gerando história completa..."
   },
   "story": {
     "verify": "Verificando conexão do provedor..."

@@ -64,10 +64,17 @@
   },
   "turn": {
     "current_story": "当前故事",
-    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), s (重启), q (退出)",
+    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), m (创作故事), s (重新启动), q (退出)",
     "command_prompt": "选择",
     "goodbye": "再见。",
     "restart": "正在重新开始故事。",
+    "full_story": "完整故事",
+    "storybook_command_prompt": "剧情操作",
+    "storybook_command_help": "r - 重新生成, e - 带修正后重新生成, w - 保存, s - 重新启动, q - 退出",
+    "story_edit_prompt": "请输入修正内容并按 Enter 应用",
+    "story_corrections_prompt": "请输入要重新生成的修改意见，或按 Enter 返回：",
+    "story_saved": "已保存剧情: {path}",
+    "story_save_failed": "无法保存剧情。",
     "retry_prompt": "重试？"
   },
   "status": {
@@ -78,12 +85,13 @@
     "openings_language_instruction": "请使用 {language} 撰写所有开场句。"
   },
   "layout": {
-    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), s (重启), q (退出)"
+    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), m (创作故事), s (重新启动), q (退出)"
   },
   "engine": {
     "asking": "正在询问故事引擎...",
     "generating_openings": "生成开场选项中...",
-    "generating_ascii": "生成 ASCII 场景中..."
+    "generating_ascii": "生成 ASCII 场景中...",
+    "generating_storybook": "生成完整故事中..."
   },
   "story": {
     "verify": "正在验证提供者连接..."

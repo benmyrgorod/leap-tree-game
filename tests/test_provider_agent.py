@@ -396,6 +396,32 @@ def test_story_client_translates_model_not_found_error() -> None:
     assert "configured model 'gpt-5.3-codex-spark' is not available" in str(exc_info.value)
 
 
+def test_story_client_generates_storybook_text() -> None:
+    agent = FakeAgent(
+        "```\nIn the oldest hour, the bell rang twice.\n\n```"
+    )
+    client = _client(agent)
+
+    story = client.generate_storybook("The old bell stirred everyone awake.")
+
+    assert story == "In the oldest hour, the bell rang twice."
+    assert "Original canonical story:" in agent.prompts[-1]
+
+
+def test_story_client_storybook_includes_corrections_in_prompt() -> None:
+    agent = FakeAgent("A clear path opened in the ash.")
+    client = _client(agent)
+
+    story = client.generate_storybook(
+        "A fire swept the hall.",
+        correction_notes="Make it darker",
+        language="en",
+    )
+
+    assert story == "A clear path opened in the ash."
+    assert '\"Make it darker\"' in agent.prompts[-1]
+
+
 def _settings() -> ProviderSettings:
     return ProviderSettings(
         provider="openai",

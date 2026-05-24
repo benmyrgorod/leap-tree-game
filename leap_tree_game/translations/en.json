@@ -80,10 +80,17 @@
   },
   "turn": {
     "current_story": "Current story",
-    "command_help": "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)",
+    "command_help": "Choose: a (first option), b (second option), r (regenerate), m (make story), s (start over), q (quit)",
     "command_prompt": "Choose",
     "goodbye": "Goodbye.",
-    "restart": "Restarting story.",
+    "restart": "Starting over.",
+    "full_story": "Full story",
+    "storybook_command_prompt": "Story action",
+    "storybook_command_help": "r - regenerate, e - regenerate with edits, w - save, s - start over, q - quit",
+    "story_edit_prompt": "Enter corrections and press Enter to apply",
+    "story_corrections_prompt": "Enter corrections to regenerate this story, or press Enter to return:",
+    "story_saved": "Story saved: {path}",
+    "story_save_failed": "Failed to save the story.",
     "retry_prompt": "Retry?"
   },
   "status": {
@@ -94,12 +101,13 @@
     "openings_language_instruction": "Write all opening lines in {language}."
   },
   "layout": {
-    "command_help": "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)"
+    "command_help": "Choose: a (first option), b (second option), r (regenerate), m (make story), s (start over), q (quit)"
   },
   "engine": {
     "asking": "Asking the story engine...",
     "generating_openings": "Generating opening choices...",
-    "generating_ascii": "Generating ASCII scene..."
+    "generating_ascii": "Generating ASCII scene...",
+    "generating_storybook": "Generating full story..."
   },
   "story": {
     "verify": "Verifying provider connection..."

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import re
+import secrets
+from datetime import datetime
+from pathlib import Path
 from typing import Callable, TypeVar
 
 from rich.console import Console
-from rich.prompt import Confirm
+from rich.prompt import Confirm, Prompt
 
 from leap_tree_game.config.settings import ProviderSettings
 from leap_tree_game.game.layout import TurnLayout
@@ -19,11 +23,12 @@ from leap_tree_game.models.story import StoryResponse
 from leap_tree_game.providers.agent import StoryClient, StoryGenerationError
 from leap_tree_game.ui.console import (
     render_error,
+    render_full_story_screen,
     render_success,
     render_turn_screen,
     render_warning,
 )
-from leap_tree_game.ui.forms import ask_choice_command
+from leap_tree_game.ui.forms import ask_choice_command, ask_storybook_command
 from leap_tree_game.ui.screens import ask_game_setup
 from leap_tree_game.i18n import t
 
@@ -87,8 +92,15 @@ class GameEngine:
                     active_console=self.console,
                 )
                 return False
+            if command == "m":
+                action = self._show_full_story(state)
+                if action == "restart":
+                    return True
+                if action == "quit":
+                    return False
+                continue
             if command == "s":
-                render_warning(
+                render_success(
                     t(state.setup.language, "turn.restart"),
                     active_console=self.console,
                 )
@@ -123,6 +135,134 @@ class GameEngine:
                 state=state,
                 turn_number=state.next_turn_number() - 1,
             )
+
+    def _show_full_story(self, state: GameState) -> str:
+        language = state.setup.language
+        source_story = state.current_story()
+        status_message: str | None = None
+        status_message_style = "green"
+        story = self._normalize_story_text(
+            self._generate_storybook_with_retry(
+                source_story=source_story,
+                language=language,
+            )
+        )
+        if story is None:
+            return "continue"
+
+        while True:
+            render_full_story_screen(
+                story,
+                active_console=self.console,
+                subtitle=self._turn_status(
+                    turn_number=state.turn_count,
+                    language=language,
+                ),
+                command_text=t(language, "turn.storybook_command_help"),
+                status_message=status_message,
+                status_message_style=status_message_style,
+                language=language,
+            )
+            status_message = None
+            status_message_style = "green"
+
+            command = ask_storybook_command(
+                console=self.console,
+                language=language,
+            )
+            if command == "q":
+                render_success(
+                    t(language, "turn.goodbye"),
+                    active_console=self.console,
+                )
+                return "quit"
+            if command == "s":
+                render_success(
+                    t(language, "turn.restart"),
+                    active_console=self.console,
+                )
+                return "restart"
+            if command == "w":
+                path = self._save_story_to_disk(state, story)
+                if path is None:
+                    status_message = t(language, "turn.story_save_failed")
+                    status_message_style = "red"
+                else:
+                    status_message = t(language, "turn.story_saved", path=path)
+                    status_message_style = "green"
+                continue
+
+            if command == "r":
+                regenerated = self._generate_storybook_with_retry(
+                    source_story=source_story,
+                    language=language,
+                )
+                if regenerated is None:
+                    return "continue"
+                story = self._normalize_story_text(regenerated)
+                continue
+
+            if command == "e":
+                correction_notes = Prompt.ask(
+                    t(language, "turn.story_edit_prompt"),
+                    default="",
+                    show_default=False,
+                    console=self.console,
+                ).strip()
+                if not correction_notes:
+                    continue
+                regenerated = self._generate_storybook_with_retry(
+                    source_story=source_story,
+                    correction_notes=correction_notes,
+                    language=language,
+                )
+                if regenerated is None:
+                    return "continue"
+                story = self._normalize_story_text(regenerated)
+                continue
+
+            render_warning(
+                f"Unsupported story command: {command}",
+                active_console=self.console,
+            )
+
+    def _save_story_to_disk(self, state: GameState, story: str) -> str | None:
+        stories_dir = self._stories_dir()
+        stories_dir.mkdir(parents=True, exist_ok=True)
+        while True:
+            path = stories_dir / self._safe_story_filename(state)
+            if not path.exists():
+                break
+        try:
+            path.write_text(story, encoding="utf-8")
+        except OSError:
+            return None
+        return str(path)
+
+    @staticmethod
+    def _normalize_story_text(story: str | None) -> str | None:
+        if story is None:
+            return None
+        return story.strip()
+
+    def _stories_dir(self) -> Path:
+        return Path.home() / ".leaptreegame" / "stories"
+
+    def _safe_story_filename(self, state: GameState) -> str:
+        genre = self._slugify(state.setup.genre, fallback="story")
+        setting = self._slugify(state.setup.setting, fallback="story")
+        language = self._slugify(state.setup.language, fallback="lang")
+        date_token = datetime.now().strftime("%Y%m%d")
+        hash_token = secrets.token_hex(3)
+        return f"{date_token}_{language}_{genre}_{setting}_{hash_token}.txt"
+
+    @staticmethod
+    def _slugify(value: str, *, fallback: str = "story") -> str:
+        slug = re.sub(r"[^a-z0-9]+", "_", value.strip().lower())
+        slug = slug.strip("_")
+        if not slug:
+            return fallback
+        return slug[:32]
 
     def _start_initial_turn(self, state: GameState) -> StoryResponse | None:
         response = self._generate_with_retry(
@@ -172,6 +312,25 @@ class GameEngine:
             ),
             status_language=state.setup.language,
             turn_number=turn_number,
+        )
+
+    def _generate_storybook_with_retry(
+        self,
+        source_story: str,
+        *,
+        correction_notes: str | None = None,
+        language: str = "en",
+    ) -> str | None:
+        return self._generate_with_retry(
+            lambda: self.story_client.generate_storybook(
+                source_story,
+                correction_notes=correction_notes,
+                language=language,
+            ),
+            status_message="engine.generating_storybook",
+            status_language=language,
+            turn_number=None,
+            ask_to_retry=True,
         )
 
     def _generate_regenerated_turn_with_retry(self, state: GameState) -> StoryResponse:

@@ -4,7 +4,11 @@ from rich.console import Console
 
 from leap_tree_game import __version__
 from leap_tree_game.models.story import StoryResponse
-from leap_tree_game.ui.console import render_title, render_turn_screen
+from leap_tree_game.ui.console import (
+    render_full_story_screen,
+    render_title,
+    render_turn_screen,
+)
 from leap_tree_game.ui.forms import render_menu_screen
 from leap_tree_game.ui.screens import _with_other_option
 
@@ -40,7 +44,10 @@ def test_turn_screen_renders_frame_story_and_choices() -> None:
     assert "On a perfectly ordinary impossible day" in output
     assert "A." in output
     assert "B." in output
-    assert "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)" in output
+    assert (
+        "Choose: a (first option), b (second option), r (regenerate), m (make story), s"
+        in output
+    )
 
 
 def test_turn_screen_renders_ascii_art_before_story() -> None:
@@ -84,6 +91,22 @@ def test_menu_screen_renders_as_framed_question() -> None:
     assert "Mystery" in output
     assert "Other" in output
     assert "setup 1/3" in output
+
+
+def test_full_story_screen_renders_title_and_story() -> None:
+    console = Console(record=True, force_terminal=False, width=90)
+
+    render_full_story_screen(
+        "The moon kept its promise and arrived at dawn.",
+        active_console=console,
+        subtitle="openai / gpt-5.2",
+    )
+
+    output = console.export_text()
+
+    assert "Leap Tree Game" in output
+    assert "Full story" in output
+    assert "The moon kept its promise and arrived at dawn." in output
 
 
 def test_opening_options_append_single_other_choice() -> None:

@@ -64,10 +64,17 @@
   },
   "turn": {
     "current_story": "現在のストーリー",
-    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), s (再開), q (終了)",
+    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), m (物語を作成), s (再開), q (終了)",
     "command_prompt": "選択",
     "goodbye": "さようなら。",
     "restart": "ストーリーを再開しています。",
+    "full_story": "フルストーリー",
+    "storybook_command_prompt": "ストーリー操作",
+    "storybook_command_help": "r - 再生成, e - 修正して再生成, w - 保存, s - 再開, q - 終了",
+    "story_edit_prompt": "修正を入力して Enter で適用",
+    "story_corrections_prompt": "修正を入力して再生成するか、Enter で戻る：",
+    "story_saved": "保存しました: {path}",
+    "story_save_failed": "ストーリーを保存できませんでした。",
     "retry_prompt": "再試行しますか？"
   },
   "status": {
@@ -78,12 +85,13 @@
     "openings_language_instruction": "導入文はすべて {language} で書いてください。"
   },
   "layout": {
-    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), s (再開), q (終了)"
+    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), m (物語を作成), s (再開), q (終了)"
   },
   "engine": {
     "asking": "物語エンジンに問い合わせ中...",
     "generating_openings": "導入文を生成中...",
-    "generating_ascii": "ASCIIシーンを生成中..."
+    "generating_ascii": "ASCIIシーンを生成中...",
+    "generating_storybook": "フルストーリーを生成中..."
   },
   "story": {
     "verify": "プロバイダー接続を確認中..."

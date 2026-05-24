@@ -81,6 +81,44 @@ def render_turn_screen(
     )
 
 
+def render_full_story_screen(
+    story: str,
+    *,
+    active_console: Console = console,
+    subtitle: str | None = None,
+    language: str = "en",
+    command_text: str | None = None,
+    status_message: str | None = None,
+    status_message_style: str = "green",
+) -> None:
+    frame_width = max(40, (active_console.width or 100) - 4)
+    full_story = Panel(
+        story,
+        title=f"[dim]{t(language, 'turn.full_story')}[/dim]",
+        border_style="cyan",
+        box=box.ROUNDED,
+        padding=(1, 2),
+        width=frame_width,
+    )
+    status = Text("")
+    if status_message:
+        status = Text.from_markup(
+            f"[{status_message_style}]{status_message}[/{status_message_style}]"
+        )
+    commands = Text(
+        f"\n{command_text or t(language, 'turn.storybook_command_help')}",
+        style="dim",
+    )
+    render_framed_screen(
+        t(language, "app.title"),
+        full_story,
+        status,
+        commands,
+        active_console=active_console,
+        subtitle=subtitle,
+    )
+
+
 def build_screen_frame(title: str, *renderables, subtitle: str | None = None) -> Panel:
     version = f"v{__version__}"
     if subtitle is None or not str(subtitle).strip():

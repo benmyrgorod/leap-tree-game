@@ -186,6 +186,28 @@ def build_ascii_art_prompt(
     )
 
 
+def build_storybook_prompt(
+    source_story: str,
+    *,
+    correction_notes: str | None = None,
+    language: str | None = None,
+) -> str:
+    template = _load_template("storybook.md")
+    correction_block = (
+        'Apply the following corrections as explicit priorities:\n"{0}"'
+        .format(correction_notes)
+        if correction_notes
+        else "No corrections requested."
+    )
+    language_code = normalize_language(language)
+    return _replace_placeholders(
+        template,
+        source_story=source_story,
+        correction_notes=correction_block,
+        language=language_display_name(language_code),
+    )
+
+
 def build_openings_prompt(
     *,
     genre: str,

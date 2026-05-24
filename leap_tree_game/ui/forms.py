@@ -119,8 +119,22 @@ def ask_choice_command(
 ) -> str:
     return Prompt.ask(
         t(language, "forms.choice_prompt"),
-        choices=["a", "b", "r", "s", "q"],
+        choices=["a", "b", "r", "m", "s", "q"],
         default="a",
+        show_choices=True,
+        console=console,
+    ).lower()
+
+
+def ask_storybook_command(
+    *,
+    console: Console,
+    language: str = "en",
+) -> str:
+    return Prompt.ask(
+        t(language, "turn.storybook_command_prompt"),
+        choices=["r", "e", "w", "s", "q"],
+        default="r",
         show_choices=True,
         console=console,
     ).lower()

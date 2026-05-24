@@ -64,10 +64,17 @@
   },
   "turn": {
     "current_story": "Storia attuale",
-    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), s (riavvia), q (esci)",
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), m (crea storia), s (riavvia), q (esci)",
     "command_prompt": "Scegli",
     "goodbye": "Arrivederci.",
     "restart": "Riavvio della storia in corso.",
+    "full_story": "Storia completa",
+    "storybook_command_prompt": "Azione sulla storia",
+    "storybook_command_help": "r - rigenera, e - rigenera con correzioni, w - salva, s - riavvia, q - esci",
+    "story_edit_prompt": "Inserisci le correzioni e premi Invio per applicare",
+    "story_corrections_prompt": "Inserisci correzioni per rigenerare questa storia, o premi Invio per tornare:",
+    "story_saved": "Storia salvata: {path}",
+    "story_save_failed": "Impossibile salvare la storia.",
     "retry_prompt": "Riprova?"
   },
   "status": {
@@ -78,12 +85,13 @@
     "openings_language_instruction": "Scrivi tutte le righe di apertura in {language}."
   },
   "layout": {
-    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), s (riavvia), q (esci)"
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), m (crea storia), s (riavvia), q (esci)"
   },
   "engine": {
     "asking": "Richiesta al motore della storia in corso...",
     "generating_openings": "Generazione delle aperture...",
-    "generating_ascii": "Generazione della scena ASCII..."
+    "generating_ascii": "Generazione della scena ASCII...",
+    "generating_storybook": "Generazione della storia completa..."
   },
   "story": {
     "verify": "Verifica della connessione del provider..."

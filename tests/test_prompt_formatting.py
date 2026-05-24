@@ -9,6 +9,7 @@ from leap_tree_game.game.prompts import (
     LANGUAGE_LEVELS,
     build_initial_prompt,
     build_ascii_art_prompt,
+    build_storybook_prompt,
     build_openings_prompt,
     build_next_prompt,
     sentence_has_ended,
@@ -254,3 +255,24 @@ def test_openings_prompt_includes_genre_setting_randomness_and_json_contract() -
     assert "Generate exactly 4 opening lines." in prompt
     assert "vivid, surprising, and meaningfully different" in prompt
     assert '"openings"' in prompt
+
+
+def test_storybook_prompt_includes_book_style_and_source_story() -> None:
+    prompt = build_storybook_prompt(
+        "The wind stirred the embers by the old forge.",
+    )
+
+    assert "You are writing a polished, book-like narrative for a real novel audience." in prompt
+    assert "Original canonical story:" in prompt
+    assert "The wind stirred the embers by the old forge." in prompt
+    assert "make a story like you are doing it for book." in prompt
+
+
+def test_storybook_prompt_includes_correction_notes() -> None:
+    prompt = build_storybook_prompt(
+        "The wind stirred the embers by the old forge.",
+        correction_notes="Add more tension",
+        language="en",
+    )
+
+    assert '"Add more tension"' in prompt

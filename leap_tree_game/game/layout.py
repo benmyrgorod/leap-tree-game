@@ -9,7 +9,7 @@ from rich.console import Console
 class TurnLayout:
     """Small layout helper used by the game loop when reserving space for art."""
 
-    COMMAND_HELP = "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)"
+    COMMAND_HELP = "Choose: a (first option), b (second option), r (regenerate), m (make story), s (start over), q (quit)"
 
     def __init__(self, console: Console) -> None:
         self.console = console
