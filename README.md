@@ -26,12 +26,12 @@ python3 -m pip install leaptreegame
 ### From Source
 
 ```bash
-git clone git@github.com:benmyrgorod/homebrew-leaptreegame.git leaptreegame
+git clone git@github.com:benmyrgorod/leaptreegame.git
 cd leaptreegame
 python3 -m pip install -r requirements.txt
 ```
 
-Source: [benmyrgorod/homebrew-leaptreegame](https://github.com/benmyrgorod/homebrew-leaptreegame)
+Source: [benmyrgorod/leaptreegame](https://github.com/benmyrgorod/leaptreegame)
 
 ## Play
 
