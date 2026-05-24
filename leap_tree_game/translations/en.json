@@ -80,7 +80,7 @@
   },
   "turn": {
     "current_story": "Current story",
-    "command_help": "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)",
+    "command_help": "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)",
     "command_prompt": "Choose",
     "goodbye": "Goodbye.",
     "restart": "Restarting story.",
@@ -94,7 +94,7 @@
     "openings_language_instruction": "Write all opening lines in {language}."
   },
   "layout": {
-    "command_help": "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)"
+    "command_help": "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)"
   },
   "engine": {
     "asking": "Asking the story engine...",

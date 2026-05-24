@@ -64,7 +64,7 @@
   },
   "turn": {
     "current_story": "História atual",
-    "command_help": "Escolher: a (primeira opção), b (segunda opção), g (regenerar), r (reiniciar), q (sair)",
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), s (reiniciar), q (sair)",
     "command_prompt": "Escolher",
     "goodbye": "Até logo.",
     "restart": "Reiniciando história.",
@@ -78,7 +78,7 @@
     "openings_language_instruction": "Escreva todas as linhas de abertura em {language}."
   },
   "layout": {
-    "command_help": "Escolher: a (primeira opção), b (segunda opção), g (regenerar), r (reiniciar), q (sair)"
+    "command_help": "Escolher: a (primeira opção), b (segunda opção), r (regenerar), s (reiniciar), q (sair)"
   },
   "engine": {
     "asking": "Perguntando ao mecanismo da história...",

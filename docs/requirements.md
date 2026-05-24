@@ -13,7 +13,7 @@ The system keeps the canonical story path, renders each state in framed screens,
     - setting
     - opening
   - Show exactly two continuation options.
-  - Advance with `a` or `b`, regenerate with `g`, restart with `r`, quit with `q`.
+  - Advance with `a` or `b`, regenerate with `r`, restart with `s`, quit with `q`.
 - **Story contract**
   - The AI must return JSON:
     - `story`

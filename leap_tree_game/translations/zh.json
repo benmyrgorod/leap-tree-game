@@ -64,7 +64,7 @@
   },
   "turn": {
     "current_story": "当前故事",
-    "command_help": "选择: a (第一个选项), b (第二个选项), g (重新生成), r (重启), q (退出)",
+    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), s (重启), q (退出)",
     "command_prompt": "选择",
     "goodbye": "再见。",
     "restart": "正在重新开始故事。",
@@ -78,7 +78,7 @@
     "openings_language_instruction": "请使用 {language} 撰写所有开场句。"
   },
   "layout": {
-    "command_help": "选择: a (第一个选项), b (第二个选项), g (重新生成), r (重启), q (退出)"
+    "command_help": "选择: a (第一个选项), b (第二个选项), r (重新生成), s (重启), q (退出)"
   },
   "engine": {
     "asking": "正在询问故事引擎...",

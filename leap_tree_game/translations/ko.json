@@ -65,7 +65,7 @@
   },
   "turn": {
     "current_story": "현재 이야기",
-    "command_help": "선택: a(첫 번째), b(두 번째), g(재생성), r(재시작), q(종료)",
+    "command_help": "선택: a(첫 번째), b(두 번째), r(재생성), s(재시작), q(종료)",
     "command_prompt": "선택",
     "goodbye": "안녕히 가세요.",
     "restart": "스토리를 다시 시작합니다.",
@@ -79,7 +79,7 @@
     "openings_language_instruction": "모든 오프닝 문장을 {language}로 작성하세요."
   },
   "layout": {
-    "command_help": "선택: a(첫 번째), b(두 번째), g(재생성), r(재시작), q(종료)"
+    "command_help": "선택: a(첫 번째), b(두 번째), r(재생성), s(재시작), q(종료)"
   },
   "engine": {
     "asking": "스토리 엔진에 요청 중...",

@@ -64,7 +64,7 @@
   },
   "turn": {
     "current_story": "Storia attuale",
-    "command_help": "Scegli: a (prima opzione), b (seconda opzione), g (rigenera), r (riavvia), q (esci)",
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), s (riavvia), q (esci)",
     "command_prompt": "Scegli",
     "goodbye": "Arrivederci.",
     "restart": "Riavvio della storia in corso.",
@@ -78,7 +78,7 @@
     "openings_language_instruction": "Scrivi tutte le righe di apertura in {language}."
   },
   "layout": {
-    "command_help": "Scegli: a (prima opzione), b (seconda opzione), g (rigenera), r (riavvia), q (esci)"
+    "command_help": "Scegli: a (prima opzione), b (seconda opzione), r (rigenera), s (riavvia), q (esci)"
   },
   "engine": {
     "asking": "Richiesta al motore della storia in corso...",

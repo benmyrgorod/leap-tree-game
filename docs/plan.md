@@ -12,7 +12,7 @@ Keep the app thin and move behavior into four layers:
    - command entrypoints (`play`, `setup`, `doctor`).
 
 2. **Engine orchestration** (`leap_tree_game/game/engine.py`)
-   - loop control (`play`, `a`/`b`/`g`/`r`/`q`),
+   - loop control (`play`, `a`/`b`/`r`/`s`/`q`),
    - generation retry handling,
    - turn append/replace state flow.
 
@@ -55,8 +55,8 @@ Build around deterministic phases:
 3. Render framed turn + ASCII scene.
 4. Ask for command:
    - `a`/`b`: apply choice, generate next turn.
-   - `g`: regenerate current turn with duplicate avoidance and same continuation shape.
-   - `r`: restart.
+   - `r`: regenerate current turn with duplicate avoidance and same continuation shape.
+   - `s`: restart.
    - `q`: quit.
 5. Repeat from step 3 until termination.
 

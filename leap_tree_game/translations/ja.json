@@ -64,7 +64,7 @@
   },
   "turn": {
     "current_story": "現在のストーリー",
-    "command_help": "選択: a (最初の選択), b (2番目の選択), g (再生成), r (再開), q (終了)",
+    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), s (再開), q (終了)",
     "command_prompt": "選択",
     "goodbye": "さようなら。",
     "restart": "ストーリーを再開しています。",
@@ -78,7 +78,7 @@
     "openings_language_instruction": "導入文はすべて {language} で書いてください。"
   },
   "layout": {
-    "command_help": "選択: a (最初の選択), b (2番目の選択), g (再生成), r (再開), q (終了)"
+    "command_help": "選択: a (最初の選択), b (2番目の選択), r (再生成), s (再開), q (終了)"
   },
   "engine": {
     "asking": "物語エンジンに問い合わせ中...",

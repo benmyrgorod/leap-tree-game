@@ -40,7 +40,7 @@ def test_turn_screen_renders_frame_story_and_choices() -> None:
     assert "On a perfectly ordinary impossible day" in output
     assert "A." in output
     assert "B." in output
-    assert "Choose: a (first option), b (second option), g (regenerate), r (restart), q (quit)" in output
+    assert "Choose: a (first option), b (second option), r (regenerate), s (restart), q (quit)" in output
 
 
 def test_turn_screen_renders_ascii_art_before_story() -> None:

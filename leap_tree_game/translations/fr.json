@@ -65,7 +65,7 @@
   },
   "turn": {
     "current_story": "Histoire actuelle",
-    "command_help": "Choisir : a (première option), b (deuxième option), g (régénérer), r (redémarrer), q (quitter)",
+    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), s (redémarrer), q (quitter)",
     "command_prompt": "Choisir",
     "goodbye": "Au revoir.",
     "restart": "Redémarrage de l'histoire.",
@@ -79,7 +79,7 @@
     "openings_language_instruction": "Écris toutes les lignes d'ouverture en {language}."
   },
   "layout": {
-    "command_help": "Choisir : a (première option), b (deuxième option), g (régénérer), r (redémarrer), q (quitter)"
+    "command_help": "Choisir : a (première option), b (deuxième option), r (régénérer), s (redémarrer), q (quitter)"
   },
   "engine": {
     "asking": "Interrogation du moteur d'histoire...",

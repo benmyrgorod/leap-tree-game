@@ -119,7 +119,7 @@ def ask_choice_command(
 ) -> str:
     return Prompt.ask(
         t(language, "forms.choice_prompt"),
-        choices=["a", "b", "g", "r", "q"],
+        choices=["a", "b", "r", "s", "q"],
         default="a",
         show_choices=True,
         console=console,

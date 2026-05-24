@@ -87,13 +87,13 @@ class GameEngine:
                     active_console=self.console,
                 )
                 return False
-            if command == "r":
+            if command == "s":
                 render_warning(
                     t(state.setup.language, "turn.restart"),
                     active_console=self.console,
                 )
                 return True
-            if command == "g":
+            if command == "r":
                 regenerated = self._generate_regenerated_turn_with_retry(state)
                 if regenerated is None:
                     return False
