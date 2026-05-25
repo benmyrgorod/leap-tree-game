@@ -49,9 +49,11 @@ def run_setup_wizard(
     if provider_name == "openai":
         openai_api_key = _ask_api_key(
             "OpenAI API key",
+            prompt_input_label="OpenAI API key",
             active_console=active_console,
             subtitle="setup 3/3",
-            required=True,
+            required=False,
+            optional_hint=True,
         )
     elif provider_name == "anthropic":
         anthropic_api_key = _ask_api_key(
@@ -71,10 +73,12 @@ def run_setup_wizard(
             )
 
     logfire_token = _ask_api_key(
-        "Logfire token (optional)",
+        "Logfire token",
+        prompt_input_label="Logfire token",
         active_console=active_console,
-        subtitle="optional",
+        subtitle="setup 4/4",
         required=False,
+        optional_hint=True,
     )
 
     settings = ProviderSettings(
@@ -145,17 +149,22 @@ def _ask_model(provider_name: str, active_console: Console) -> str:
 
 def _ask_api_key(
     prompt_label: str,
+    prompt_input_label: str | None = None,
     *,
     active_console: Console,
     subtitle: str,
     required: bool = False,
+    optional_hint: bool = False,
 ) -> str | None:
     last_error: str | None = None
     while True:
+        description = "Enter the API key used by the selected provider."
+        if optional_hint:
+            description += " Optional."
         lines = [
             Text(prompt_label, style="bold"),
             Text(""),
-            Text("Enter the API key used by the selected provider.", style="dim"),
+            Text(description, style="dim"),
         ]
         if last_error:
             lines.append(Text(last_error, style="yellow"))
@@ -166,7 +175,11 @@ def _ask_api_key(
             active_console=active_console,
             subtitle=subtitle,
         )
-        value = Prompt.ask(prompt_label, password=True, console=active_console).strip()
+        value = Prompt.ask(
+            prompt_input_label or prompt_label,
+            password=True,
+            console=active_console,
+        ).strip()
         if value:
             return value
         if not required:
