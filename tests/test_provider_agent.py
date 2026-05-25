@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
+from leap_tree_game import telemetry
 from leap_tree_game.config.settings import ProviderSettings
 from leap_tree_game.game.state import GameSetup, GameState
 from leap_tree_game.providers.agent import StoryClient, StoryGenerationError
@@ -209,6 +212,54 @@ def test_story_client_generates_openings_from_genre_and_setting() -> None:
     assert "Normality level: Mostly realistic" in agent.prompts[-1]
     assert "Language level: Poetic" in agent.prompts[-1]
     assert "Generate exactly 3 opening lines." in agent.prompts[-1]
+
+
+def test_story_client_logs_prompt_and_response() -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def fake_event(name: str, **fields: object) -> None:
+        events.append((name, fields))
+
+    old_logger = telemetry._LOGFIRE_MODULE
+    try:
+        telemetry._LOGFIRE_MODULE = SimpleNamespace(event=fake_event)  # type: ignore[assignment]
+
+        agent = FakeAgent(
+            {
+                "story": "The moon hung like a coin over the harbor.",
+                "option_a": ", into the silvered grove.",
+                "option_b": ", toward the hidden spring.",
+            }
+        )
+        client = _client(agent)
+
+        client.generate_initial(
+            GameSetup(
+                genre="Fantasy",
+                setting="Middle Ages",
+                opening="Once upon a time in a distant land",
+            )
+        )
+    finally:
+        telemetry._LOGFIRE_MODULE = old_logger  # type: ignore[assignment]
+
+    request_name, request_fields = events[0]
+    response_name, response_fields = events[1]
+
+    assert request_name == "story_client.request"
+    assert request_fields["output_kind"] == "story"
+    prompt = request_fields["prompt"]
+    assert isinstance(prompt, str)
+    assert "Selected genre: Fantasy" in prompt
+
+    assert response_name == "story_client.response"
+    assert response_fields["status"] == "ok"
+    assert response_fields["output_type"] == "dict"
+    assert response_fields["response"] == {
+        "story": "The moon hung like a coin over the harbor.",
+        "option_a": ", into the silvered grove.",
+        "option_b": ", toward the hidden spring.",
+    }
 
 
 def test_story_client_rejects_too_few_openings() -> None:

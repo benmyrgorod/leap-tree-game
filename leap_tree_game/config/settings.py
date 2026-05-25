@@ -39,13 +39,20 @@ class ProviderSettings(BaseModel):
     anthropic_api_key: str | None = None
     ollama_base_url: str = DEFAULT_OLLAMA_BASE_URL
     ollama_api_key: str | None = None
+    logfire_token: str | None = None
 
     @field_validator("provider", mode="before")
     @classmethod
     def normalize_provider(cls, value: str) -> str:
         return value.strip().lower() if isinstance(value, str) else value
 
-    @field_validator("openai_api_key", "anthropic_api_key", "ollama_api_key", mode="before")
+    @field_validator(
+        "openai_api_key",
+        "anthropic_api_key",
+        "ollama_api_key",
+        "logfire_token",
+        mode="before",
+    )
     @classmethod
     def empty_string_to_none(cls, value: str | None) -> str | None:
         if value is None:
@@ -95,6 +102,7 @@ def load_settings(env_path: Path | str | None = None) -> ProviderSettings:
         "anthropic_api_key": values.get("ANTHROPIC_API_KEY"),
         "ollama_base_url": values.get("OLLAMA_BASE_URL") or DEFAULT_OLLAMA_BASE_URL,
         "ollama_api_key": values.get("OLLAMA_API_KEY"),
+        "logfire_token": values.get("LOGFIRE_TOKEN") or values.get("LOGFIRE_API_KEY"),
     }
 
     try:
@@ -116,6 +124,7 @@ def write_env_file(settings: ProviderSettings, env_path: Path | str | None = Non
         ("ANTHROPIC_API_KEY", settings.anthropic_api_key or ""),
         ("OLLAMA_BASE_URL", settings.ollama_base_url),
         ("OLLAMA_API_KEY", settings.ollama_api_key or ""),
+        ("LOGFIRE_TOKEN", settings.logfire_token or ""),
     ]
     path.write_text("\n".join(f"{key}={_clean_env_value(value)}" for key, value in lines) + "\n")
     try:
@@ -171,3 +180,4 @@ def _format_validation_error(exc: ValidationError) -> str:
         location = ".".join(str(part) for part in error["loc"]) or "settings"
         messages.append(f"{location}: {error['msg']}")
     return "; ".join(messages)
+

@@ -23,6 +23,7 @@ from leap_tree_game.models.story import (
     parse_opening_suggestions,
     parse_story_response,
 )
+from leap_tree_game.telemetry import logfire_event, logfire_span
 
 
 class StoryGenerationError(RuntimeError):
@@ -103,7 +104,6 @@ def _create_agent(settings: ProviderSettings, output_type: Any | None = None):
 def _load_pydantic_agent():
     try:
         from pydantic_ai import Agent
-
         return Agent
     except ImportError as exc:
         raise StoryGenerationError(
@@ -116,7 +116,6 @@ def _create_model(settings: ProviderSettings):
     if settings.provider == "openai":
         from pydantic_ai.models.openai import OpenAIChatModel
         from pydantic_ai.providers.openai import OpenAIProvider
-
         return OpenAIChatModel(
             settings.model,
             provider=OpenAIProvider(api_key=settings.openai_api_key),
@@ -125,7 +124,6 @@ def _create_model(settings: ProviderSettings):
     if settings.provider == "anthropic":
         from pydantic_ai.models.anthropic import AnthropicModel
         from pydantic_ai.providers.anthropic import AnthropicProvider
-
         return AnthropicModel(
             settings.model,
             provider=AnthropicProvider(api_key=settings.anthropic_api_key),
@@ -133,7 +131,6 @@ def _create_model(settings: ProviderSettings):
 
     from pydantic_ai.models.ollama import OllamaModel
     from pydantic_ai.providers.ollama import OllamaProvider
-
     return OllamaModel(
         settings.model,
         provider=OllamaProvider(
@@ -251,6 +248,22 @@ class StoryClient:
             "The model response was not valid story JSON. You can retry or switch models.",
         )
 
+    def verify_connection(self) -> None:
+        """Run a small provider request to ensure API access is available."""
+        verification_prompt = (
+            "Return exactly this JSON object and nothing else:\n"
+            '{"story":"ok","option_a":"continue","option_b":"reset"}'
+        )
+        self._run_with_generation_errors(
+            lambda: parse_story_response(
+                self._run_sync(
+                    verification_prompt,
+                    output_kind="connection",
+                )
+            ),
+            "LLM connection check failed. Please verify your API settings and network.",
+        )
+
     def generate_ascii_art(
         self,
         story: str,
@@ -364,10 +377,25 @@ class StoryClient:
         self,
         prompt: str,
         *,
-        output_kind: Literal["story", "ascii", "openings", "story_text"] = "story",
+        output_kind: Literal["story", "ascii", "openings", "story_text", "connection"] = "story",
     ):
         agent = self._agent_for_output(output_kind)
-        result = agent.run_sync(prompt)
+        logfire_event(
+            "story_client.request",
+            output_kind=output_kind,
+            prompt=prompt,
+        )
+        with logfire_span(f"story_client.run_sync.{output_kind}"):
+            result = agent.run_sync(prompt)
+        response_object = getattr(result, "output", result)
+        response_payload = _serialize_for_log(response_object)
+        logfire_event(
+            "story_client.response",
+            output_kind=output_kind,
+            status="ok",
+            output_type=type(response_object).__name__,
+            response=response_payload,
+        )
         self.token_usage.add(result)
         return getattr(result, "output", result)
 
@@ -394,7 +422,7 @@ class StoryClient:
 
     def _agent_for_output(
         self,
-        output_kind: Literal["story", "ascii", "openings", "story_text"],
+        output_kind: Literal["story", "ascii", "openings", "story_text", "connection"],
     ):
         if output_kind == "openings":
             if self.openings_agent is None:
@@ -483,6 +511,26 @@ def _extract_usage(result: Any) -> dict[str, int]:
         "cache_read_tokens": int(getattr(raw, "cache_read_tokens", 0)),
         "output_tokens": int(getattr(raw, "output_tokens", 0)),
     }
+
+
+def _serialize_for_log(value: object) -> object:
+    if hasattr(value, "model_dump"):
+        model_dump = getattr(value, "model_dump")
+        if callable(model_dump):
+            return model_dump()
+
+    if hasattr(value, "dict"):
+        dict_fn = getattr(value, "dict")
+        if callable(dict_fn):
+            try:
+                return dict_fn()
+            except TypeError:
+                pass
+
+    if isinstance(value, (dict, list, tuple, str, int, float, bool, type(None))):
+        return value
+
+    return str(value)
 
 
 def _extract_quoted_model_name(message: str) -> str | None:

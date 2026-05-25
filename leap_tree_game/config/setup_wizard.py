@@ -44,6 +44,7 @@ def run_setup_wizard(
     anthropic_api_key: str | None = None
     ollama_base_url = DEFAULT_OLLAMA_BASE_URL
     ollama_api_key: str | None = None
+    logfire_token: str | None = None
 
     if provider_name == "openai":
         openai_api_key = _ask_api_key(
@@ -69,6 +70,13 @@ def run_setup_wizard(
                 required=True,
             )
 
+    logfire_token = _ask_api_key(
+        "Logfire token (optional)",
+        active_console=active_console,
+        subtitle="optional",
+        required=False,
+    )
+
     settings = ProviderSettings(
         provider=provider_name,  # type: ignore[arg-type]
         model=model,
@@ -76,6 +84,7 @@ def run_setup_wizard(
         anthropic_api_key=anthropic_api_key,
         ollama_base_url=ollama_base_url,
         ollama_api_key=ollama_api_key,
+        logfire_token=logfire_token,
     )
     write_env_file(settings, env_path)
     env_file = Path(env_path) if env_path is not None else default_env_path()

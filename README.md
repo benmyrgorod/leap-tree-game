@@ -53,6 +53,12 @@ By default, the setup wizard writes configuration to `~/.leaptreegame/.env` and 
 
 Local Ollama does not require an API key when using `http://localhost:11434/v1`.
 
+You can also configure Logfire telemetry (optional). Add `LOGFIRE_TOKEN` in your `.env` and, if you want telemetry enabled, install `logfire`:
+
+```bash
+python3 -m pip install logfire
+```
+
 ## Commands
 
 * `leaptreegame --help` - display help

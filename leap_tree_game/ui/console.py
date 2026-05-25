@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import random
+
 from rich import box
 from rich.console import Console
 from rich.console import Group
@@ -154,10 +156,19 @@ def render_title(*, active_console: Console = console, version: str | None = Non
     # `version` is intentionally kept for compatibility with existing call sites.
     _ = version
     title = Text("Leap Tree Game", style="bold cyan")
+    greeting = random.choice(_WELCOME_GREETINGS)
+    renderables = [title, Text(greeting, style="yellow")]
     subtitle = "branching AI stories"
     render_framed_screen(
         "Leap Tree Game",
-        title,
+        *renderables,
         active_console=active_console,
         subtitle=subtitle,
     )
+
+_WELCOME_GREETINGS = [
+    "Welcome back, storyteller! The branches are waiting.",
+    "Welcome! A warm fire, a cool breeze, and a new story path ahead.",
+    "Welcome! May your next choice change the world in the best way.",
+    "Welcome, friend. Pull up a chair and make the next turn memorable.",
+]

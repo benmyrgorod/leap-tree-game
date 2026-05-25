@@ -29,6 +29,7 @@ from leap_tree_game.ui.console import (
 from leap_tree_game.ui.forms import ask_choice_command, ask_storybook_command
 from leap_tree_game.ui.screens import ask_game_setup
 from leap_tree_game.i18n import t
+from leap_tree_game.telemetry import logfire_event, logfire_span
 
 T = TypeVar("T")
 TurnCommandResult: TypeAlias = Literal["continue", "restart", "quit"]
@@ -54,29 +55,39 @@ class GameEngine:
 
     def play(self) -> None:
         while True:
-            setup = ask_game_setup(
-                console=self.console,
-                provider_summary=self.settings.summary(),
-                opening_options_provider=self._generate_opening_options,
-            )
-            if setup is None:
-                return
-            state = GameState(setup=setup)
+            with logfire_span("story_session"):
+                setup = ask_game_setup(
+                    console=self.console,
+                    provider_summary=self.settings.summary(),
+                    opening_options_provider=self._generate_opening_options,
+                )
+                if setup is None:
+                    return
+                self._log_user_decision(
+                    "setup",
+                    genre=setup.genre,
+                    setting=setup.setting,
+                    language=setup.language,
+                    normality_level=setup.normality_level,
+                    language_level=setup.language_level,
+                    opening=setup.opening,
+                )
+                state = GameState(setup=setup)
 
-            first_response = self._start_initial_turn(state)
-            if first_response is None:
-                return
-            state.append_response(
-                first_response,
-            )
-            self._render_turn(
-                first_response,
-                state=state,
-                turn_number=state.next_turn_number() - 1,
-            )
+                first_response = self._start_initial_turn(state)
+                if first_response is None:
+                    return
+                state.append_response(
+                    first_response,
+                )
+                self._render_turn(
+                    first_response,
+                    state=state,
+                    turn_number=state.next_turn_number() - 1,
+                )
 
-            if not self._play_turns(state):
-                return
+                if not self._play_turns(state):
+                    return
 
     def _play_turns(self, state: GameState) -> bool:
         while True:
@@ -97,6 +108,11 @@ class GameEngine:
         command: str,
     ) -> TurnCommandResult:
         if command == "q":
+            self._log_user_decision(
+                "turn",
+                command="q",
+                turn=state.turn_count,
+            )
             render_success(
                 t(state.setup.language, "turn.goodbye"),
                 active_console=self.console,
@@ -104,6 +120,11 @@ class GameEngine:
             return "quit"
 
         if command == "s":
+            self._log_user_decision(
+                "turn",
+                command="s",
+                turn=state.turn_count,
+            )
             render_success(
                 t(state.setup.language, "turn.restart"),
                 active_console=self.console,
@@ -111,6 +132,11 @@ class GameEngine:
             return "restart"
 
         if command == "m":
+            self._log_user_decision(
+                "turn",
+                command="m",
+                turn=state.turn_count,
+            )
             action = self._show_full_story(state)
             if action == "restart":
                 return "restart"
@@ -119,6 +145,11 @@ class GameEngine:
             return "continue"
 
         if command == "r":
+            self._log_user_decision(
+                "turn",
+                command="r",
+                turn=state.turn_count,
+            )
             regenerated = self._generate_regenerated_turn_with_retry(state)
             if regenerated is None:
                 return "quit"
@@ -142,6 +173,12 @@ class GameEngine:
         label: str,
     ) -> TurnCommandResult:
         choice = state.choose(label)
+        self._log_user_decision(
+            "turn_choice",
+            command=label.lower(),
+            turn=state.turn_count,
+            choice_label=label,
+        )
         next_response = self._generate_next_turn_with_retry(
             state,
             choice,
@@ -224,6 +261,11 @@ class GameEngine:
     ) -> tuple[StorybookCommandResult, str | None, str | None, str]:
         style = "green"
         if command == "q":
+            self._log_user_decision(
+                "storybook",
+                command="q",
+                turn=state.turn_count,
+            )
             render_success(
                 t(language, "turn.goodbye"),
                 active_console=self.console,
@@ -231,6 +273,11 @@ class GameEngine:
             return "quit", None, None, style
 
         if command == "s":
+            self._log_user_decision(
+                "storybook",
+                command="s",
+                turn=state.turn_count,
+            )
             render_success(
                 t(language, "turn.restart"),
                 active_console=self.console,
@@ -238,14 +285,31 @@ class GameEngine:
             return "restart", None, None, style
 
         if command == "w":
+            self._log_user_decision(
+                "storybook",
+                command="w",
+                turn=state.turn_count,
+            )
             path = self._save_story_to_disk(state, current_story)
             if path is None:
+                self._log_user_decision(
+                    "storybook",
+                    command="w",
+                    turn=state.turn_count,
+                    saved=False,
+                )
                 return (
                     "continue",
                     current_story,
                     t(language, "turn.story_save_failed"),
                     "red",
                 )
+            self._log_user_decision(
+                "storybook",
+                command="w",
+                turn=state.turn_count,
+                saved=True,
+            )
             return (
                 "continue",
                 current_story,
@@ -254,6 +318,11 @@ class GameEngine:
             )
 
         if command == "r":
+            self._log_user_decision(
+                "storybook",
+                command="r",
+                turn=state.turn_count,
+            )
             regenerated = self._generate_storybook_with_retry(
                 state=state,
                 source_story=source_story,
@@ -276,7 +345,19 @@ class GameEngine:
                 console=self.console,
             ).strip()
             if not correction_notes:
+                self._log_user_decision(
+                    "storybook",
+                    command="e",
+                    turn=state.turn_count,
+                    has_corrections=False,
+                )
                 return "continue", None, None, style
+            self._log_user_decision(
+                "storybook",
+                command="e",
+                turn=state.turn_count,
+                has_corrections=True,
+            )
             regenerated = self._generate_storybook_with_retry(
                 state=state,
                 source_story=source_story,
@@ -296,7 +377,20 @@ class GameEngine:
             f"Unsupported story command: {command}",
             active_console=self.console,
         )
+        self._log_user_decision(
+            "storybook",
+            command="unsupported",
+            turn=state.turn_count,
+            value=command,
+        )
         return "continue", None, f"Unsupported story command: {command}", "yellow"
+
+    def _log_user_decision(self, phase: str, **fields: object) -> None:
+        logfire_event(
+            "user.decision",
+            phase=phase,
+            **fields,
+        )
 
     def _save_story_to_disk(self, state: GameState, story: str) -> str | None:
         stories_dir = self._stories_dir()
