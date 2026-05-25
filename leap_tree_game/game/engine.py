@@ -6,7 +6,7 @@ import re
 import secrets
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeAlias, TypeVar
 
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
@@ -14,8 +14,6 @@ from rich.prompt import Confirm, Prompt
 from leap_tree_game.config.settings import ProviderSettings
 from leap_tree_game.game.layout import TurnLayout
 from leap_tree_game.game.logic import (
-    continuation_shape_for_turn,
-    continuation_shape_for_response,
     responses_match,
 )
 from leap_tree_game.game.state import Choice, GameState
@@ -33,6 +31,8 @@ from leap_tree_game.ui.screens import ask_game_setup
 from leap_tree_game.i18n import t
 
 T = TypeVar("T")
+TurnCommandResult: TypeAlias = Literal["continue", "restart", "quit"]
+StorybookCommandResult: TypeAlias = Literal["continue", "restart", "quit"]
 
 
 class GameEngine:
@@ -68,7 +68,6 @@ class GameEngine:
                 return
             state.append_response(
                 first_response,
-                continuation_shape=continuation_shape_for_response(first_response),
             )
             self._render_turn(
                 first_response,
@@ -85,64 +84,89 @@ class GameEngine:
                 console=self.console,
                 language=state.setup.language,
             )
-
-            if command == "q":
-                render_success(
-                    t(state.setup.language, "turn.goodbye"),
-                    active_console=self.console,
-                )
+            action = self._handle_turn_command(state=state, command=command)
+            if action == "quit":
                 return False
-            if command == "m":
-                action = self._show_full_story(state)
-                if action == "restart":
-                    return True
-                if action == "quit":
-                    return False
-                continue
-            if command == "s":
-                render_success(
-                    t(state.setup.language, "turn.restart"),
-                    active_console=self.console,
-                )
+            if action == "restart":
                 return True
-            if command == "r":
-                regenerated = self._generate_regenerated_turn_with_retry(state)
-                if regenerated is None:
-                    return False
-                continuation_shape = continuation_shape_for_turn(state.latest_turn)
-                state.replace_latest_turn(
-                    regenerated,
-                    continuation_shape=continuation_shape,
-                )
-                self._render_turn(
-                    regenerated,
-                    state=state,
-                    turn_number=state.turn_count,
-                )
-                continue
 
-            label = "A" if command == "a" else "B"
-            choice = state.choose(label)
-            next_response = self._generate_next_turn_with_retry(state, choice, turn_number=state.next_turn_number())
-            if next_response is None:
-                return False
-            state.append_response(
-                next_response,
-                continuation_shape=continuation_shape_for_response(next_response),
+    def _handle_turn_command(
+        self,
+        *,
+        state: GameState,
+        command: str,
+    ) -> TurnCommandResult:
+        if command == "q":
+            render_success(
+                t(state.setup.language, "turn.goodbye"),
+                active_console=self.console,
+            )
+            return "quit"
+
+        if command == "s":
+            render_success(
+                t(state.setup.language, "turn.restart"),
+                active_console=self.console,
+            )
+            return "restart"
+
+        if command == "m":
+            action = self._show_full_story(state)
+            if action == "restart":
+                return "restart"
+            if action == "quit":
+                return "quit"
+            return "continue"
+
+        if command == "r":
+            regenerated = self._generate_regenerated_turn_with_retry(state)
+            if regenerated is None:
+                return "quit"
+            state.replace_latest_turn(
+                regenerated,
             )
             self._render_turn(
-                next_response,
+                regenerated,
                 state=state,
-                turn_number=state.next_turn_number() - 1,
+                turn_number=state.turn_count,
             )
+            return "continue"
 
-    def _show_full_story(self, state: GameState) -> str:
+        label = "A" if command == "a" else "B"
+        return self._handle_turn_choice(state=state, label=label)
+
+    def _handle_turn_choice(
+        self,
+        *,
+        state: GameState,
+        label: str,
+    ) -> TurnCommandResult:
+        choice = state.choose(label)
+        next_response = self._generate_next_turn_with_retry(
+            state,
+            choice,
+            turn_number=state.next_turn_number(),
+        )
+        if next_response is None:
+            return "quit"
+        state.append_response(
+            next_response,
+        )
+        self._render_turn(
+            next_response,
+            state=state,
+            turn_number=state.next_turn_number() - 1,
+        )
+        return "continue"
+
+    def _show_full_story(self, state: GameState) -> StorybookCommandResult:
         language = state.setup.language
         source_story = state.current_story()
         status_message: str | None = None
         status_message_style = "green"
         story = self._normalize_story_text(
             self._generate_storybook_with_retry(
+                state=state,
                 source_story=source_story,
                 language=language,
             )
@@ -170,74 +194,125 @@ class GameEngine:
                 console=self.console,
                 language=language,
             )
-            if command == "q":
-                render_success(
-                    t(language, "turn.goodbye"),
-                    active_console=self.console,
-                )
-                return "quit"
-            if command == "s":
-                render_success(
-                    t(language, "turn.restart"),
-                    active_console=self.console,
-                )
-                return "restart"
-            if command == "w":
-                path = self._save_story_to_disk(state, story)
-                if path is None:
-                    status_message = t(language, "turn.story_save_failed")
-                    status_message_style = "red"
-                else:
-                    status_message = t(language, "turn.story_saved", path=path)
-                    status_message_style = "green"
-                continue
-
-            if command == "r":
-                regenerated = self._generate_storybook_with_retry(
-                    source_story=source_story,
-                    language=language,
-                )
-                if regenerated is None:
-                    return "continue"
-                story = self._normalize_story_text(regenerated)
-                continue
-
-            if command == "e":
-                correction_notes = Prompt.ask(
-                    t(language, "turn.story_edit_prompt"),
-                    default="",
-                    show_default=False,
-                    console=self.console,
-                ).strip()
-                if not correction_notes:
+            action, updated_story, status_update, status_style = self._handle_storybook_command(
+                state=state,
+                command=command,
+                language=language,
+                source_story=source_story,
+                current_story=story,
+            )
+            if action == "continue":
+                if updated_story is not None:
+                    story = updated_story
+                if status_update is not None:
+                    status_message = status_update
+                    status_message_style = status_style
                     continue
-                regenerated = self._generate_storybook_with_retry(
-                    source_story=source_story,
-                    correction_notes=correction_notes,
-                    language=language,
-                )
-                if regenerated is None:
-                    return "continue"
-                story = self._normalize_story_text(regenerated)
+                status_message = None
+                status_message_style = "green"
                 continue
+            return action
 
-            render_warning(
-                f"Unsupported story command: {command}",
+    def _handle_storybook_command(
+        self,
+        *,
+        state: GameState,
+        command: str,
+        language: str,
+        source_story: str,
+        current_story: str,
+    ) -> tuple[StorybookCommandResult, str | None, str | None, str]:
+        style = "green"
+        if command == "q":
+            render_success(
+                t(language, "turn.goodbye"),
                 active_console=self.console,
             )
+            return "quit", None, None, style
+
+        if command == "s":
+            render_success(
+                t(language, "turn.restart"),
+                active_console=self.console,
+            )
+            return "restart", None, None, style
+
+        if command == "w":
+            path = self._save_story_to_disk(state, current_story)
+            if path is None:
+                return (
+                    "continue",
+                    current_story,
+                    t(language, "turn.story_save_failed"),
+                    "red",
+                )
+            return (
+                "continue",
+                current_story,
+                t(language, "turn.story_saved", path=path),
+                "green",
+            )
+
+        if command == "r":
+            regenerated = self._generate_storybook_with_retry(
+                state=state,
+                source_story=source_story,
+                language=language,
+            )
+            if regenerated is None:
+                return "continue", None, None, style
+            return (
+                "continue",
+                self._normalize_story_text(regenerated),
+                None,
+                style,
+            )
+
+        if command == "e":
+            correction_notes = Prompt.ask(
+                t(language, "turn.story_edit_prompt"),
+                default="",
+                show_default=False,
+                console=self.console,
+            ).strip()
+            if not correction_notes:
+                return "continue", None, None, style
+            regenerated = self._generate_storybook_with_retry(
+                state=state,
+                source_story=source_story,
+                correction_notes=correction_notes,
+                language=language,
+            )
+            if regenerated is None:
+                return "continue", None, None, style
+            return (
+                "continue",
+                self._normalize_story_text(regenerated),
+                None,
+                style,
+            )
+
+        render_warning(
+            f"Unsupported story command: {command}",
+            active_console=self.console,
+        )
+        return "continue", None, f"Unsupported story command: {command}", "yellow"
 
     def _save_story_to_disk(self, state: GameState, story: str) -> str | None:
         stories_dir = self._stories_dir()
         stories_dir.mkdir(parents=True, exist_ok=True)
-        while True:
-            path = stories_dir / self._safe_story_filename(state)
-            if not path.exists():
-                break
         try:
+            path = self._next_story_path(state, stories_dir)
             path.write_text(story, encoding="utf-8")
         except OSError:
             return None
         return str(path)
+
+    def _next_story_path(self, state: GameState, stories_dir: Path) -> Path:
+        while True:
+            path = stories_dir / self._safe_story_filename(state)
+            if not path.exists():
+                return path
 
     @staticmethod
     def _normalize_story_text(story: str | None) -> str | None:
@@ -319,16 +394,25 @@ class GameEngine:
         source_story: str,
         *,
         correction_notes: str | None = None,
+        state: GameState | None = None,
         language: str = "en",
     ) -> str | None:
+        language_code = language or (state.setup.language if state is not None else "en")
         return self._generate_with_retry(
             lambda: self.story_client.generate_storybook(
                 source_story,
                 correction_notes=correction_notes,
-                language=language,
+                genre=state.setup.genre if state is not None else None,
+                setting=state.setup.setting if state is not None else None,
+                opening=state.setup.opening if state is not None else None,
+                normality_level=(
+                    state.setup.normality_level if state is not None else None
+                ),
+                language_level=state.setup.language_level if state is not None else None,
+                language=language_code,
             ),
             status_message="engine.generating_storybook",
-            status_language=language,
+            status_language=language_code,
             turn_number=None,
             ask_to_retry=True,
         )
@@ -364,7 +448,6 @@ class GameEngine:
             raise ValueError("Cannot regenerate before any turns exist.")
 
         avoid = (last_turn.option_a, last_turn.option_b)
-        continuation_shape = continuation_shape_for_turn(last_turn)
 
         if last_turn.choice is None:
             previous_choice = state.latest_choice()
@@ -372,14 +455,12 @@ class GameEngine:
                 return self.story_client.generate_initial(
                     state.setup,
                     avoid_continuations=avoid,
-                    continuation_shape=continuation_shape,
                     language=state.setup.language,
                 )
             return self.story_client.generate_next(
                 state,
                 previous_choice,
                 avoid_continuations=avoid,
-                continuation_shape=continuation_shape,
                 language=state.setup.language,
             )
 
@@ -387,7 +468,6 @@ class GameEngine:
             state,
             last_turn.choice,
             avoid_continuations=avoid,
-            continuation_shape=continuation_shape,
             language=state.setup.language,
         )
 

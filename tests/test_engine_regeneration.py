@@ -14,20 +14,17 @@ from leap_tree_game.models.story import StoryResponse
 class FakeStoryClient:
     def __init__(self, next_responses: Sequence[StoryResponse]) -> None:
         self.next_responses = list(next_responses)
-        self.initial_calls: list[
-            tuple[GameSetup, tuple[str, str] | None, str | None]
-        ] = []
-        self.next_calls: list[tuple[str, tuple[str, str] | None, str | None]] = []
+        self.initial_calls: list[tuple[GameSetup, tuple[str, str] | None]] = []
+        self.next_calls: list[tuple[str, tuple[str, str] | None]] = []
 
     def generate_initial(
         self,
         setup: GameSetup,
         *,
         avoid_continuations: tuple[str, str] | None = None,
-        continuation_shape=None,
         language: str | None = None,
     ) -> StoryResponse:
-        self.initial_calls.append((setup, avoid_continuations, continuation_shape))
+        self.initial_calls.append((setup, avoid_continuations))
         return self._pop_response()
 
     def generate_next(
@@ -36,10 +33,9 @@ class FakeStoryClient:
         choice,
         *,
         avoid_continuations: tuple[str, str] | None = None,
-        continuation_shape=None,
         language: str | None = None,
     ) -> StoryResponse:
-        self.next_calls.append((state.current_story(), avoid_continuations, continuation_shape))
+        self.next_calls.append((state.current_story(), avoid_continuations))
         return self._pop_response()
 
     def _pop_response(self) -> StoryResponse:
@@ -77,10 +73,7 @@ def test_regenerate_turn_requests_diverse_options_from_story_client() -> None:
     assert response.option_a == "under a black sky"
     assert response.option_b == "before dawn."
     assert len(client.next_calls) == 3
-    assert client.next_calls[0][1:] == (
-        ("into the silvered grove", "toward the hidden spring."),
-        "continue_sentence",
-    )
+    assert client.next_calls[0][1:] == (("into the silvered grove", "toward the hidden spring."),)
 
 
 def test_regenerate_turn_with_no_choice_calls_generate_initial_and_avoids_previous_options() -> None:
@@ -118,52 +111,8 @@ def test_regenerate_turn_with_no_choice_calls_generate_initial_and_avoids_previo
         (
             state.setup,
             ("into the silvered grove", "toward the hidden spring."),
-            "continue_sentence",
         )
     ]
-
-
-def test_regenerate_turn_preserves_previous_continuation_shape() -> None:
-    state = GameState(
-        setup=GameSetup(
-            genre="Mystery",
-            setting="Modern Day",
-            opening="On a perfectly ordinary impossible day",
-        )
-    )
-    state.append_response(
-        StoryResponse(
-            story="On a perfectly ordinary impossible day",
-            option_a="into the silvered grove",
-            option_b="toward the hidden spring.",
-        ),
-        continuation_shape="end_sentence",
-    )
-    state.choose("A")
-    state.append_response(
-        StoryResponse(
-            story="On a perfectly ordinary impossible day into the silvered grove",
-            option_a="before dawn",
-            option_b="under a black sky.",
-        ),
-        continuation_shape="continue_sentence",
-    )
-
-    replacement = StoryResponse(
-        story="On a perfectly ordinary impossible day into the silvered grove",
-        option_a="under a black sky",
-        option_b="before dawn.",
-    )
-    client = FakeStoryClient([replacement])
-    engine = GameEngine(
-        ProviderSettings(provider="openai", model="gpt-5.2", openai_api_key="sk-test"),
-        story_client=client,
-        console=Console(file=StringIO(), force_terminal=False),
-    )
-
-    engine._generate_regenerated_turn_with_retry(state)
-
-    assert client.next_calls[0][2] == "continue_sentence"
 
 
 def test_art_height_is_calculated_from_remaining_terminal_space() -> None:

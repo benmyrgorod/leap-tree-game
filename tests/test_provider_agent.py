@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-import leap_tree_game.game.prompts as prompt_module
 from leap_tree_game.config.settings import ProviderSettings
 from leap_tree_game.game.state import GameSetup, GameState
 from leap_tree_game.providers.agent import StoryClient, StoryGenerationError
@@ -78,7 +77,7 @@ def test_story_client_next_prompt_includes_choice() -> None:
             "option_b": "Call for help",
         }
     )
-    client = _client(agent, "continue_sentence")
+    client = _client(agent)
     state = GameState(
         setup=GameSetup(
             genre="Mystery",
@@ -95,121 +94,6 @@ def test_story_client_next_prompt_includes_choice() -> None:
 
     assert "The player selected option A" in agent.prompts[-1]
     assert response.story == "Shortly before reality lost control Step onto leaves"
-
-
-def test_story_client_capitalizes_options_after_period() -> None:
-    agent = FakeAgent(
-        {
-            "story": "Ignored.",
-            "option_a": "into the silvered grove.",
-            "option_b": "toward the hidden spring.",
-        }
-    )
-    client = _client(agent)
-
-    response = client.generate_initial(
-        GameSetup(
-            genre="Mystery",
-            setting="Fantasy",
-            opening="A young lady mysteriously asked to follow the serpent's whisper.",
-        )
-    )
-
-    assert response.option_a == "Into the silvered grove."
-    assert response.option_b == "Toward the hidden spring."
-
-
-def test_story_client_keeps_lowercase_fragment_when_story_does_not_end_period() -> None:
-    agent = FakeAgent(
-        {
-            "story": "Ignored.",
-            "option_a": "into the silvered grove",
-            "option_b": "toward the hidden spring",
-        }
-    )
-    client = _client(agent, "continue_sentence")
-
-    response = client.generate_initial(
-        GameSetup(
-            genre="Mystery",
-            setting="Fantasy",
-            opening="A young lady mysteriously asked",
-        )
-    )
-
-    assert response.option_a == "into the silvered grove"
-    assert response.option_b == "toward the hidden spring"
-
-
-def test_story_client_strips_terminal_punctuation_when_option_should_not_end_sentence() -> None:
-    agent = FakeAgent(
-        {
-            "story": "Ignored.",
-            "option_a": "into the silvered grove.",
-            "option_b": "toward the hidden spring!",
-        }
-    )
-    client = _client(agent, "continue_sentence")
-
-    response = client.generate_initial(
-        GameSetup(
-            genre="Mystery",
-            setting="Fantasy",
-            opening="A young lady mysteriously asked",
-        )
-    )
-
-    assert response.option_a == "into the silvered grove"
-    assert response.option_b == "toward the hidden spring"
-
-
-def test_story_client_adds_period_when_option_should_end_sentence() -> None:
-    agent = FakeAgent(
-        {
-            "story": "Ignored.",
-            "option_a": "into the silvered grove",
-            "option_b": "toward the hidden spring?",
-        }
-    )
-    client = _client(agent, "end_sentence")
-
-    response = client.generate_initial(
-        GameSetup(
-            genre="Mystery",
-            setting="Fantasy",
-            opening="A young lady mysteriously asked",
-        )
-    )
-
-    assert response.option_a == "into the silvered grove."
-    assert response.option_b == "toward the hidden spring?"
-
-
-def test_story_client_default_picker_alternates_sentence_endings(monkeypatch) -> None:
-    monkeypatch.setattr(
-        prompt_module,
-        "choose_continuation_shape",
-        lambda: "continue_sentence",
-    )
-    agent = FakeAgent(
-        {
-            "story": "Ignored.",
-            "option_a": "into the silvered grove.",
-            "option_b": "toward the hidden spring.",
-        }
-    )
-    client = StoryClient(_settings(), agent=agent)
-    setup = GameSetup(
-        genre="Mystery",
-        setting="Fantasy",
-        opening="A young lady mysteriously asked",
-    )
-
-    first = client.generate_initial(setup)
-    second = client.generate_initial(setup)
-
-    assert first.option_a == "into the silvered grove"
-    assert second.option_a == "into the silvered grove."
 
 
 def test_story_client_generates_ascii_art() -> None:
@@ -415,11 +299,21 @@ def test_story_client_storybook_includes_corrections_in_prompt() -> None:
     story = client.generate_storybook(
         "A fire swept the hall.",
         correction_notes="Make it darker",
+        genre="Mystery",
+        setting="Modern Day",
+        opening="Once upon a time in a distant land",
+        normality_level="Balanced",
+        language_level="Conversational",
         language="en",
     )
 
     assert story == "A clear path opened in the ash."
     assert '\"Make it darker\"' in agent.prompts[-1]
+    assert "Selected genre: Mystery" in agent.prompts[-1]
+    assert "Selected setting: Modern Day" in agent.prompts[-1]
+    assert "Selected opening: Once upon a time in a distant land" in agent.prompts[-1]
+    assert "Normality level: Balanced" in agent.prompts[-1]
+    assert "Language level: Conversational" in agent.prompts[-1]
 
 
 def _settings() -> ProviderSettings:
@@ -430,9 +324,8 @@ def _settings() -> ProviderSettings:
     )
 
 
-def _client(agent: FakeAgent, continuation_shape: str = "end_sentence") -> StoryClient:
-    return StoryClient(
-        _settings(),
-        agent=agent,
-        continuation_shape_picker=lambda: continuation_shape,
-    )
+def _client(agent: FakeAgent) -> StoryClient:
+    client = StoryClient(_settings(), agent=agent)
+    client.ascii_agent = agent
+    client.openings_agent = agent
+    return client

@@ -4,27 +4,19 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
-from typing import Callable, Literal, Protocol
+from typing import Any, Callable, Literal, Protocol, TypeVar
 
 from pydantic import ValidationError
 
 from leap_tree_game.config.settings import ProviderSettings
 from leap_tree_game.game.prompts import (
-    BalancedContinuationShapePicker,
-    ContinuationShape,
-    build_initial_prompt,
     build_ascii_art_prompt,
+    build_initial_prompt,
+    build_next_prompt,
     build_openings_prompt,
     build_storybook_prompt,
-    build_next_prompt,
 )
 from leap_tree_game.game.state import Choice, GameSetup, GameState
-from leap_tree_game.game.text import (
-    capitalize_continuation_if_needed,
-    ensure_terminal_punctuation,
-    strip_terminal_punctuation,
-)
 from leap_tree_game.models.story import (
     OpeningSuggestions,
     StoryResponse,
@@ -39,6 +31,9 @@ class StoryGenerationError(RuntimeError):
     def __init__(self, message: str, *, original: Exception | None = None) -> None:
         super().__init__(message)
         self.original = original
+
+
+T = TypeVar("T")
 
 
 class RunsSync(Protocol):
@@ -74,49 +69,47 @@ class TokenUsage:
         )
 
 
+_PYDANTIC_AI_NOT_INSTALLED = (
+    "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`."
+)
+
+
 def create_story_agent(settings: ProviderSettings):
     """Return a configured Pydantic AI agent for `StoryResponse` output."""
 
-    try:
-        from pydantic_ai import Agent
-    except ImportError as exc:
-        raise StoryGenerationError(
-            "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`.",
-            original=exc,
-        ) from exc
-
-    model = _create_model(settings)
-    return Agent(model=model, output_type=_output_type(settings))
+    return _create_agent(settings, output_type=_output_type(settings))
 
 
 def create_ascii_agent(settings: ProviderSettings):
     """Return a configured Pydantic AI agent for plain-text (ASCII) output."""
 
-    try:
-        from pydantic_ai import Agent
-    except ImportError as exc:
-        raise StoryGenerationError(
-            "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`.",
-            original=exc,
-        ) from exc
-
-    model = _create_model(settings)
-    return Agent(model=model)
+    return _create_agent(settings)
 
 
 def create_openings_agent(settings: ProviderSettings):
     """Return a configured Pydantic AI agent for opening suggestions."""
 
+    return _create_agent(settings, output_type=_openings_output_type(settings))
+
+
+def _create_agent(settings: ProviderSettings, output_type: Any | None = None):
+    agent_factory = _load_pydantic_agent()
+    model = _create_model(settings)
+    if output_type is None:
+        return agent_factory(model=model)
+    return agent_factory(model=model, output_type=output_type)
+
+
+def _load_pydantic_agent():
     try:
         from pydantic_ai import Agent
+
+        return Agent
     except ImportError as exc:
         raise StoryGenerationError(
-            "Pydantic AI is not installed. Run `python3 -m pip install -r requirements.txt`.",
+            _PYDANTIC_AI_NOT_INSTALLED,
             original=exc,
         ) from exc
-
-    model = _create_model(settings)
-    return Agent(model=model, output_type=_openings_output_type(settings))
 
 
 def _create_model(settings: ProviderSettings):
@@ -180,10 +173,6 @@ class StoryClient:
     agent: RunsSync | None = None
     ascii_agent: RunsSync | None = None
     openings_agent: RunsSync | None = None
-    continuation_shape_picker: Callable[[], ContinuationShape] = field(
-        default_factory=BalancedContinuationShapePicker
-    )
-    last_continuation_shape: ContinuationShape | None = None
     token_usage: TokenUsage = field(default_factory=TokenUsage)
 
     def generate_initial(
@@ -191,22 +180,16 @@ class StoryClient:
         setup: GameSetup,
         *,
         avoid_continuations: tuple[str, str] | None = None,
-        continuation_shape: ContinuationShape | None = None,
         language: str | None = None,
     ) -> StoryResponse:
-        continuation_shape = (
-            continuation_shape or self.continuation_shape_picker()
-        )
-        self.last_continuation_shape = continuation_shape
         response = self.generate(
             build_initial_prompt(
                 setup,
-                continuation_shape=continuation_shape,
                 avoid_continuations=avoid_continuations,
                 language=language,
             )
         )
-        return _with_canonical_story(response, setup.opening, continuation_shape)
+        return _with_canonical_story(response, setup.opening)
 
     def generate_next(
         self,
@@ -214,72 +197,59 @@ class StoryClient:
         choice: Choice,
         *,
         avoid_continuations: tuple[str, str] | None = None,
-        continuation_shape: ContinuationShape | None = None,
         language: str | None = None,
     ) -> StoryResponse:
-        continuation_shape = (
-            continuation_shape or self.continuation_shape_picker()
-        )
-        self.last_continuation_shape = continuation_shape
         response = self.generate(
             build_next_prompt(
                 state,
                 choice,
-                continuation_shape=continuation_shape,
                 avoid_continuations=avoid_continuations,
                 language=language,
             )
         )
-        return _with_canonical_story(response, state.current_story(), continuation_shape)
+        return _with_canonical_story(response, state.current_story())
 
     def generate_storybook(
         self,
         source_story: str,
         *,
         correction_notes: str | None = None,
+        genre: str | None = None,
+        setting: str | None = None,
+        opening: str | None = None,
+        normality_level: str | None = None,
+        language_level: str | None = None,
         language: str | None = None,
     ) -> str:
-        try:
-            raw_output = self._run_sync(
-                build_storybook_prompt(
-                    source_story=source_story,
-                    correction_notes=correction_notes,
-                    language=language,
-                ),
-                output_kind="story_text",
-            )
-            return _coerce_story_text(raw_output)
-        except StoryGenerationError:
-            raise
-        except (ValidationError, ValueError, TypeError) as exc:
-            raise StoryGenerationError(
-                "The model did not return usable story text.",
-                original=exc,
-            ) from exc
-        except Exception as exc:
-            raise _translate_exception(
-                exc,
-                provider=self.settings.provider,
-                model=self.settings.model,
-            ) from exc
+        return self._run_with_generation_errors(
+            lambda: _coerce_story_text(
+                self._run_sync(
+                    build_storybook_prompt(
+                        source_story=source_story,
+                        correction_notes=correction_notes,
+                        genre=genre,
+                        setting=setting,
+                        opening=opening,
+                        normality_level=normality_level,
+                        language_level=language_level,
+                        language=language,
+                    ),
+                    output_kind="story_text",
+                )
+            ),
+            "The model did not return usable story text.",
+        )
 
-    def generate(self, prompt: str) -> StoryResponse:
-        try:
-            raw_output = self._run_sync(prompt)
-            return parse_story_response(raw_output)
-        except StoryGenerationError:
-            raise
-        except (ValidationError, ValueError, TypeError) as exc:
-            raise StoryGenerationError(
-                "The model response was not valid story JSON. You can retry or switch models.",
-                original=exc,
-            ) from exc
-        except Exception as exc:
-            raise _translate_exception(
-                exc,
-                provider=self.settings.provider,
-                model=self.settings.model,
-            ) from exc
+    def generate(
+        self,
+        prompt: str,
+    ) -> StoryResponse:
+        return self._run_with_generation_errors(
+            lambda: parse_story_response(
+                self._run_sync(prompt, output_kind="story")
+            ),
+            "The model response was not valid story JSON. You can retry or switch models.",
+        )
 
     def generate_ascii_art(
         self,
@@ -291,36 +261,24 @@ class StoryClient:
         width: int | None = None,
         height: int | None = None,
     ) -> str:
-        try:
-            raw_output = self._run_sync(
-                build_ascii_art_prompt(
-                    story,
-                    genre=genre,
-                    setting=setting,
-                    language=language,
-                    width=width,
-                    height=height,
+        return self._run_with_generation_errors(
+            lambda: _coerce_ascii_art(
+                self._run_sync(
+                    build_ascii_art_prompt(
+                        story,
+                        genre=genre,
+                        setting=setting,
+                        language=language,
+                        width=width,
+                        height=height,
+                    ),
+                    output_kind="ascii",
                 ),
-                output_kind="ascii",
-            )
-            return _coerce_ascii_art(
-                raw_output,
                 target_width=width,
                 target_height=height,
-            )
-        except StoryGenerationError:
-            raise
-        except (ValidationError, ValueError, TypeError) as exc:
-            raise StoryGenerationError(
-                "The model did not return usable ASCII art.",
-                original=exc,
-            ) from exc
-        except Exception as exc:
-            raise _translate_exception(
-                exc,
-                provider=self.settings.provider,
-                model=self.settings.model,
-            ) from exc
+            ),
+            "The model did not return usable ASCII art.",
+        )
 
     def generate_openings(
         self,
@@ -332,36 +290,28 @@ class StoryClient:
         count: int = 11,
         language: str | None = None,
     ) -> list[str]:
-        try:
-            raw_output = self._run_sync(
-                build_openings_prompt(
-                    genre=genre,
-                    setting=setting,
-                    normality_level=normality_level,
-                    language_level=language_level,
-                    count=count,
-                    language=language,
-                ),
-                output_kind="openings",
-            )
-            openings = parse_opening_suggestions(raw_output).openings
+        raw_output = self._run_with_generation_errors(
+            lambda: parse_opening_suggestions(
+                self._run_sync(
+                    build_openings_prompt(
+                        genre=genre,
+                        setting=setting,
+                        normality_level=normality_level,
+                        language_level=language_level,
+                        count=count,
+                        language=language,
+                    ),
+                    output_kind="openings",
+                )
+            ).openings,
+            "The model did not return usable opening choices.",
+        )
+        openings = raw_output
+        if len(openings) > count:
             openings = openings[:count]
-            if len(openings) < _minimum_opening_count(count):
-                raise ValueError("The model returned too few opening choices.")
-            return openings
-        except StoryGenerationError:
-            raise
-        except (ValidationError, ValueError, TypeError) as exc:
-            raise StoryGenerationError(
-                "The model did not return usable opening choices.",
-                original=exc,
-            ) from exc
-        except Exception as exc:
-            raise _translate_exception(
-                exc,
-                provider=self.settings.provider,
-                model=self.settings.model,
-            ) from exc
+        if len(openings) < _minimum_opening_count(count):
+            raise StoryGenerationError("The model returned too few opening choices.")
+        return openings
 
     @property
     def total_tokens(self) -> int:
@@ -416,29 +366,49 @@ class StoryClient:
         *,
         output_kind: Literal["story", "ascii", "openings", "story_text"] = "story",
     ):
-        if output_kind == "ascii":
-            if self.agent is not None:
-                agent = self.agent
-            else:
-                agent = self.ascii_agent or create_ascii_agent(self.settings)
-                self.ascii_agent = agent
-        elif output_kind == "openings":
-            if self.agent is not None:
-                agent = self.agent
-            else:
-                agent = self.openings_agent or create_openings_agent(self.settings)
-                self.openings_agent = agent
-        elif output_kind == "story_text":
-            if self.agent is not None:
-                agent = self.agent
-            else:
-                agent = self.ascii_agent or create_ascii_agent(self.settings)
-        else:
-            agent = self.agent or create_story_agent(self.settings)
-
+        agent = self._agent_for_output(output_kind)
         result = agent.run_sync(prompt)
         self.token_usage.add(result)
         return getattr(result, "output", result)
+
+    def _run_with_generation_errors(
+        self,
+        operation: Callable[[], T],
+        error_message: str,
+    ) -> T:
+        try:
+            return operation()
+        except StoryGenerationError:
+            raise
+        except (ValidationError, ValueError, TypeError) as exc:
+            raise StoryGenerationError(
+                error_message,
+                original=exc,
+            ) from exc
+        except Exception as exc:
+            raise _translate_exception(
+                exc,
+                provider=self.settings.provider,
+                model=self.settings.model,
+            ) from exc
+
+    def _agent_for_output(
+        self,
+        output_kind: Literal["story", "ascii", "openings", "story_text"],
+    ):
+        if output_kind == "openings":
+            if self.openings_agent is None:
+                self.openings_agent = create_openings_agent(self.settings)
+            return self.openings_agent
+
+        if output_kind in {"ascii", "story_text"}:
+            if self.ascii_agent is None:
+                self.ascii_agent = create_ascii_agent(self.settings)
+            return self.ascii_agent
+
+        if self.agent is None:
+            self.agent = create_story_agent(self.settings)
+        return self.agent
 
 
 def _translate_exception(
@@ -520,27 +490,8 @@ def _extract_quoted_model_name(message: str) -> str | None:
     return match.group(2) if match else None
 
 
-def _with_canonical_story(
-    response: StoryResponse,
-    story: str,
-    continuation_shape: ContinuationShape,
-) -> StoryResponse:
-    return StoryResponse(
-        story=story,
-        option_a=_normalize_option(story, response.option_a, continuation_shape),
-        option_b=_normalize_option(story, response.option_b, continuation_shape),
-    )
-
-
-def _normalize_option(
-    story: str,
-    option: str,
-    continuation_shape: ContinuationShape,
-) -> str:
-    normalized = capitalize_continuation_if_needed(story, option)
-    if continuation_shape == "continue_sentence":
-        return strip_terminal_punctuation(normalized)
-    return ensure_terminal_punctuation(normalized)
+def _with_canonical_story(response: StoryResponse, story: str) -> StoryResponse:
+    return StoryResponse(story=story, option_a=response.option_a, option_b=response.option_b)
 
 
 def _coerce_story_text(raw_output: object) -> str:
@@ -566,23 +517,20 @@ def _coerce_ascii_art(
         raise ValueError("ASCII art response was empty.")
     if _contains_prose_lines(text):
         raise ValueError("ASCII art response contains prose text.")
-    if target_width is not None and target_width > 0:
-        lines = [
-            line[:target_width].ljust(target_width)
-            for line in text.splitlines()
-        ]
-        if len(lines) < target_height or target_height is None:
-            pad_target = target_height or 0
-            while len(lines) < pad_target:
-                lines.append(" " * target_width)
-        text = "\n".join(lines)
-    else:
-        lines = text.splitlines()
 
-    if target_height is not None and target_height > 0:
-        if len(lines) > target_height:
-            lines = lines[:target_height]
-            return "\n".join(lines).rstrip()
+    lines = text.splitlines()
+    if target_width is not None and target_width > 0:
+        lines = [line[:target_width].ljust(target_width) for line in lines]
+        if target_height is None:
+            target_height = 0
+        while len(lines) < target_height:
+            lines.append(" " * target_width)
+        text = "\n".join(lines)
+
+    if target_height is not None and target_height > 0 and len(lines) > target_height:
+        lines = lines[:target_height]
+        return "\n".join(lines).rstrip()
+
     return text
 
 

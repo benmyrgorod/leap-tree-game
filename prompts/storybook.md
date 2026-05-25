@@ -1,5 +1,11 @@
 You are writing a polished, book-like narrative for a real novel audience.
 
+Selected genre: {genre}
+Selected setting: {setting}
+Selected opening: {opening}
+Normality level: {normality_level}
+Language level: {language_level}
+
 Original canonical story:
 {source_story}
 

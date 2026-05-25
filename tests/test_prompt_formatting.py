@@ -1,8 +1,5 @@
 from __future__ import annotations
-
-import leap_tree_game.game.prompts as prompt_module
 from leap_tree_game.game.prompts import (
-    BalancedContinuationShapePicker,
     GENRES,
     OPENINGS,
     SETTINGS,
@@ -12,7 +9,6 @@ from leap_tree_game.game.prompts import (
     build_storybook_prompt,
     build_openings_prompt,
     build_next_prompt,
-    sentence_has_ended,
 )
 from leap_tree_game.game.state import GameSetup, GameState
 from leap_tree_game.models.story import StoryResponse
@@ -31,7 +27,7 @@ def test_initial_prompt_includes_setup_and_json_contract() -> None:
         opening="Three strangers accidentally brought",
     )
 
-    prompt = build_initial_prompt(setup, continuation_shape="continue_sentence")
+    prompt = build_initial_prompt(setup)
 
     assert "Adventure or Quest" in prompt
     assert "Age of Pirates and Exploration" in prompt
@@ -42,10 +38,11 @@ def test_initial_prompt_includes_setup_and_json_contract() -> None:
     assert "Normality level: Balanced" in prompt
     assert f"Language level: {LANGUAGE_LEVELS[0]}" in prompt
     assert "appended directly" in prompt
-    assert "3-7 words" in prompt
-    assert "should continue the previous sentence" in prompt
+    assert "5-12 words" in prompt
+    assert "Use either first-person or third-person perspective" in prompt
+    assert "should continue the previous sentence" not in prompt
     assert "should start a new sentence" not in prompt
-    assert "should not end the sentence" in prompt
+    assert "should not end the sentence" not in prompt
     assert "should be the end of the sentence" not in prompt
 
 
@@ -66,7 +63,7 @@ def test_next_prompt_includes_full_history_and_selected_choice() -> None:
     )
     choice = state.choose("A")
 
-    prompt = build_next_prompt(state, choice, continuation_shape="end_sentence")
+    prompt = build_next_prompt(state, choice)
 
     assert "Comedy" in prompt
     assert "Wild West" in prompt
@@ -77,49 +74,12 @@ def test_next_prompt_includes_full_history_and_selected_choice() -> None:
     assert "selected option A continuation: , a sheriff discovered singing horses." in prompt
     assert "The player selected option A: , a sheriff discovered singing horses." in prompt
     assert "Current canonical story so far:" in prompt
-    assert "3-7 words" in prompt
-    assert "should start a new sentence" in prompt
+    assert "5-12 words" in prompt
+    assert "Use either first-person or third-person perspective" in prompt
+    assert "should start a new sentence" not in prompt
     assert "should continue the previous sentence" not in prompt
-    assert "should be the end of the sentence" in prompt
+    assert "should be the end of the sentence" not in prompt
     assert "should not end the sentence" not in prompt
-
-
-def test_prompt_builder_randomly_selects_one_continuation_shape(monkeypatch) -> None:
-    seen_options = []
-
-    def fake_choice(options):
-        seen_options.append(tuple(options))
-        return "end_sentence"
-
-    monkeypatch.setattr(prompt_module.random, "choice", fake_choice)
-    setup = GameSetup(
-        genre="Mystery",
-        setting="Modern Day",
-        opening="Someone stole the sun and replaced it with",
-    )
-
-    prompt = build_initial_prompt(setup)
-
-    assert seen_options == [("continue_sentence", "end_sentence")]
-    assert "{continuation_shape_instruction}" not in prompt
-    assert "{continuation_start_instruction}" not in prompt
-    assert "should be the end of the sentence" in prompt
-
-
-def test_balanced_continuation_shape_picker_randomizes_then_alternates(monkeypatch) -> None:
-    monkeypatch.setattr(
-        prompt_module,
-        "choose_continuation_shape",
-        lambda: "continue_sentence",
-    )
-    picker = BalancedContinuationShapePicker()
-
-    assert [picker(), picker(), picker(), picker()] == [
-        "continue_sentence",
-        "end_sentence",
-        "continue_sentence",
-        "end_sentence",
-    ]
 
 
 def test_initial_prompt_instructs_new_sentence_when_opening_ended() -> None:
@@ -129,17 +89,10 @@ def test_initial_prompt_instructs_new_sentence_when_opening_ended() -> None:
         opening="The sun vanished.",
     )
 
-    prompt = build_initial_prompt(setup, continuation_shape="continue_sentence")
+    prompt = build_initial_prompt(setup)
 
-    assert "should start a new sentence" in prompt
+    assert "should start a new sentence" not in prompt
     assert "should continue the previous sentence" not in prompt
-
-
-def test_sentence_has_ended_detects_common_sentence_punctuation() -> None:
-    assert sentence_has_ended("The sun vanished.")
-    assert sentence_has_ended("The sun vanished!")
-    assert sentence_has_ended("The sun vanished?")
-    assert not sentence_has_ended("The sun vanished")
 
 
 def test_initial_prompt_includes_regeneration_avoidance_instruction() -> None:
@@ -151,7 +104,6 @@ def test_initial_prompt_includes_regeneration_avoidance_instruction() -> None:
 
     prompt = build_initial_prompt(
         setup,
-        continuation_shape="continue_sentence",
         avoid_continuations=("the fox listened.", "the moon smiled."),
     )
 
@@ -188,7 +140,6 @@ def test_next_prompt_includes_regeneration_avoidance_instruction() -> None:
     prompt = build_next_prompt(
         state,
         choice,
-        continuation_shape="end_sentence",
         avoid_continuations=("the fox listened.", "the moon smiled."),
     )
 
@@ -260,12 +211,23 @@ def test_openings_prompt_includes_genre_setting_randomness_and_json_contract() -
 def test_storybook_prompt_includes_book_style_and_source_story() -> None:
     prompt = build_storybook_prompt(
         "The wind stirred the embers by the old forge.",
+        genre="Mystery",
+        setting="Modern Day",
+        opening="On a perfectly ordinary impossible day",
+        normality_level="Balanced",
+        language_level="Conversational",
+        language="en",
     )
 
     assert "You are writing a polished, book-like narrative for a real novel audience." in prompt
     assert "Original canonical story:" in prompt
     assert "The wind stirred the embers by the old forge." in prompt
     assert "make a story like you are doing it for book." in prompt
+    assert "Selected genre: Mystery" in prompt
+    assert "Selected setting: Modern Day" in prompt
+    assert "Selected opening: On a perfectly ordinary impossible day" in prompt
+    assert "Normality level: Balanced" in prompt
+    assert "Language level: Conversational" in prompt
 
 
 def test_storybook_prompt_includes_correction_notes() -> None:

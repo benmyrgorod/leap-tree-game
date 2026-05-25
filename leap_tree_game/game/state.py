@@ -10,7 +10,6 @@ from leap_tree_game.models.story import StoryResponse
 from leap_tree_game.game.text import append_continuation
 
 ChoiceLabel = Literal["A", "B"]
-ContinuationShape = Literal["continue_sentence", "end_sentence"]
 
 
 class NonEmptyTextModel(BaseModel):
@@ -49,20 +48,16 @@ class StoryTurn(NonEmptyTextModel):
     option_a: str
     option_b: str
     choice: Choice | None = None
-    continuation_shape: ContinuationShape | None = None
 
     @classmethod
     def from_response(
         cls,
         response: StoryResponse,
-        *,
-        continuation_shape: ContinuationShape | None = None,
     ) -> "StoryTurn":
         return cls(
             story=response.story,
             option_a=response.option_a,
             option_b=response.option_b,
-            continuation_shape=continuation_shape,
         )
 
     def option_text(self, label: ChoiceLabel) -> str:
@@ -86,22 +81,18 @@ class GameState(BaseModel):
     def append_response(
         self,
         response: StoryResponse,
-        *,
-        continuation_shape: ContinuationShape | None = None,
     ) -> StoryTurn:
-        turn = StoryTurn.from_response(response, continuation_shape=continuation_shape)
+        turn = StoryTurn.from_response(response)
         self.turns.append(turn)
         return turn
 
     def replace_latest_turn(
         self,
         response: StoryResponse,
-        *,
-        continuation_shape: ContinuationShape | None = None,
     ) -> StoryTurn:
         if not self.turns:
             raise ValueError("Cannot replace turn before any responses exist.")
-        turn = StoryTurn.from_response(response, continuation_shape=continuation_shape)
+        turn = StoryTurn.from_response(response)
         self.turns[-1] = turn
         return turn
 

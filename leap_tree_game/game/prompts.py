@@ -4,20 +4,11 @@ from __future__ import annotations
 
 import random
 import re
-from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
-from typing import Literal
 
 from leap_tree_game.game.state import Choice, GameSetup, GameState
-from leap_tree_game.game.text import sentence_has_ended
 from leap_tree_game.i18n import language_display_name, normalize_language
-
-ContinuationShape = Literal["continue_sentence", "end_sentence"]
-ContinuationStart = Literal["start_new_sentence", "continue_previous_sentence"]
-CONTINUATION_SHAPES: tuple[ContinuationShape, ContinuationShape] = (
-    "continue_sentence",
-    "end_sentence",
-)
 
 GENRES = [
     "Zero to Hero",
@@ -86,43 +77,23 @@ LANGUAGE_LEVELS = [
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_DIR = PROJECT_ROOT / "prompts"
-CONTINUATION_SHAPE_INSTRUCTIONS: dict[ContinuationShape, str] = {
-    "continue_sentence": (
-        "For this turn, each option should not end the sentence."
-    ),
-    "end_sentence": (
-        "For this turn, each option should be the end of the sentence."
-    ),
-}
-CONTINUATION_START_INSTRUCTIONS: dict[ContinuationStart, str] = {
-    "start_new_sentence": (
-        'Because "story" already ends a sentence, each option should start a new sentence.'
-    ),
-    "continue_previous_sentence": (
-        'Because "story" does not end a sentence, each option should continue the previous sentence.'
-    ),
-}
 
 
 def build_initial_prompt(
     setup: GameSetup,
     *,
-    continuation_shape: ContinuationShape | None = None,
     avoid_continuations: tuple[str, str] | None = None,
     language: str | None = None,
 ) -> str:
-    template = _load_template("initial.md")
     language_code = normalize_language(language or setup.language)
-    return _replace_placeholders(
-        template,
+    return _build_prompt(
+        "initial.md",
+        language=language_code,
         genre=setup.genre,
         setting=setup.setting,
         opening=setup.opening,
         normality_level=setup.normality_level,
         language_level=setup.language_level,
-        language=language_display_name(language_code),
-        continuation_start_instruction=_continuation_start_instruction(setup.opening),
-        continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
         regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
             avoid_continuations
         ),
@@ -133,15 +104,14 @@ def build_next_prompt(
     state: GameState,
     choice: Choice,
     *,
-    continuation_shape: ContinuationShape | None = None,
     avoid_continuations: tuple[str, str] | None = None,
     language: str | None = None,
 ) -> str:
-    template = _load_template("next.md")
     current_story = state.current_story()
     language_code = normalize_language(language or state.setup.language)
-    return _replace_placeholders(
-        template,
+    return _build_prompt(
+        "next.md",
+        language=language_code,
         genre=state.setup.genre,
         setting=state.setup.setting,
         opening=state.setup.opening,
@@ -151,9 +121,6 @@ def build_next_prompt(
         current_story=current_story,
         choice_label=choice.label,
         choice_text=choice.text,
-        language=language_display_name(language_code),
-        continuation_start_instruction=_continuation_start_instruction(current_story),
-        continuation_shape_instruction=_continuation_shape_instruction(continuation_shape),
         regeneration_avoidance_instruction=_regeneration_avoidance_instruction(
             avoid_continuations
         ),
@@ -169,18 +136,17 @@ def build_ascii_art_prompt(
     width: int | None = None,
     height: int | None = None,
 ) -> str:
-    template = _load_template("ascii_art.md")
     target_width = str(width or 80)
     target_height = str(height or 12)
     focus_sentence = _extract_last_sentence(story)
     language_code = normalize_language(language or "en")
-    return _replace_placeholders(
-        template,
+    return _build_prompt(
+        "ascii_art.md",
+        language=language_code,
         genre=genre or "a timeless adventure",
         setting=setting or "an open setting",
         story_context=story,
         focus_sentence=focus_sentence,
-        language=language_display_name(language_code),
         width=target_width,
         height=target_height,
     )
@@ -190,9 +156,13 @@ def build_storybook_prompt(
     source_story: str,
     *,
     correction_notes: str | None = None,
+    genre: str | None = None,
+    setting: str | None = None,
+    opening: str | None = None,
+    normality_level: str | None = None,
+    language_level: str | None = None,
     language: str | None = None,
 ) -> str:
-    template = _load_template("storybook.md")
     correction_block = (
         'Apply the following corrections as explicit priorities:\n"{0}"'
         .format(correction_notes)
@@ -200,11 +170,21 @@ def build_storybook_prompt(
         else "No corrections requested."
     )
     language_code = normalize_language(language)
-    return _replace_placeholders(
-        template,
+    genre_text = genre or "selected genre"
+    setting_text = setting or "selected setting"
+    opening_text = opening or "selected opening"
+    normality_text = normality_level or "selected normality level"
+    language_level_text = language_level or "selected language level"
+    return _build_prompt(
+        "storybook.md",
+        language=language_code,
         source_story=source_story,
+        genre=genre_text,
+        setting=setting_text,
+        opening=opening_text,
+        normality_level=normality_text,
+        language_level=language_level_text,
         correction_notes=correction_block,
-        language=language_display_name(language_code),
     )
 
 
@@ -218,18 +198,26 @@ def build_openings_prompt(
     language: str | None = None,
     random_marker: str | None = None,
 ) -> str:
-    template = _load_template("openings.md")
     language_code = normalize_language(language)
     marker = random_marker or str(random.randrange(100_000, 1_000_000))
-    return _replace_placeholders(
-        template,
+    return _build_prompt(
+        "openings.md",
+        language=language_code,
         genre=genre,
         setting=setting,
         normality_level=normality_level,
         language_level=language_level,
         count=str(count),
-        language=language_display_name(language_code),
         random_marker=marker,
+    )
+
+
+def _build_prompt(name: str, *, language: str, **values: object) -> str:
+    template = _load_template(name)
+    return _replace_placeholders(
+        template,
+        language=language_display_name(language),
+        **values,
     )
 
 
@@ -245,6 +233,7 @@ def _extract_last_sentence(story: str) -> str:
     return match[-1].strip()
 
 
+@lru_cache(maxsize=None)
 def _load_template(name: str) -> str:
     path = PROMPT_DIR / name
     if not path.exists():
@@ -252,44 +241,11 @@ def _load_template(name: str) -> str:
     return path.read_text().strip()
 
 
-def _replace_placeholders(template: str, **values: str) -> str:
+def _replace_placeholders(template: str, **values: object) -> str:
     formatted = template
     for key, value in values.items():
-        formatted = formatted.replace("{" + key + "}", value)
+        formatted = formatted.replace("{" + key + "}", str(value))
     return formatted
-
-
-def _continuation_shape_instruction(shape: ContinuationShape | None) -> str:
-    selected_shape = shape or choose_continuation_shape()
-    return CONTINUATION_SHAPE_INSTRUCTIONS[selected_shape]
-
-
-def choose_continuation_shape() -> ContinuationShape:
-    return random.choice(CONTINUATION_SHAPES)
-
-
-@dataclass
-class BalancedContinuationShapePicker:
-    """Choose the first shape randomly, then alternate for a visible 50/50 split."""
-
-    next_shape: ContinuationShape | None = None
-
-    def __call__(self) -> ContinuationShape:
-        shape = self.next_shape or choose_continuation_shape()
-        self.next_shape = opposite_continuation_shape(shape)
-        return shape
-
-
-def opposite_continuation_shape(shape: ContinuationShape) -> ContinuationShape:
-    if shape == "continue_sentence":
-        return "end_sentence"
-    return "continue_sentence"
-
-
-def _continuation_start_instruction(story: str) -> str:
-    if sentence_has_ended(story):
-        return CONTINUATION_START_INSTRUCTIONS["start_new_sentence"]
-    return CONTINUATION_START_INSTRUCTIONS["continue_previous_sentence"]
 
 
 def _regeneration_avoidance_instruction(
